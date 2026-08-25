@@ -1,0 +1,1799 @@
+/* Design-Basis: scharfe Kanten, 1px Rahmen vor Schatten, Token-Farben, Light/Dark. */
+
+:root {
+  --bg: #f4f6f8;
+  --panel: #ffffff;
+  --panel-2: #f1f5f9;
+  --panel-3: #e6ebf0;
+  --border: #e0e5ea;
+  --border-strong: #c9d1d9;
+  --text: #232b33;
+  --text-soft: #4b5563;
+  --muted: #7b8794;
+  --brand: #0052a3;
+  --brand-deep: #00376d;
+  --brand-soft: #e8f1fb;
+  --accent: #f46610;
+  --accent-soft: #fdeee3;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --violet: #8b5cf6;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px -16px rgba(16, 24, 40, 0.18);
+  --shadow-hover: 0 1px 2px rgba(16, 24, 40, 0.08), 0 12px 28px -14px rgba(16, 24, 40, 0.24);
+  --sidebar: #ffffff;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #101315;
+  --panel: #191d20;
+  --panel-2: #21262a;
+  --panel-3: #2a3035;
+  --border: #2c3237;
+  --border-strong: #3d454c;
+  --text: #e8ecef;
+  --text-soft: #c3cad1;
+  --muted: #8b959e;
+  --brand: #4d9bea;
+  --brand-deep: #79b6f5;
+  --brand-soft: #16283c;
+  --accent: #ff8a3d;
+  --accent-soft: #35220f;
+  --green: #34d399;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --violet: #a78bfa;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px -18px rgba(0, 0, 0, 0.7);
+  --shadow-hover: 0 1px 2px rgba(0, 0, 0, 0.5), 0 14px 32px -16px rgba(0, 0, 0, 0.8);
+  --sidebar: #15181b;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Helvetica Neue", Helvetica, system-ui, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+h1 {
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+  background-clip: content-box;
+}
+
+/* ------------------------------------------------------------------ atoms */
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  min-width: 0;
+}
+
+.card.tight {
+  padding: 12px 14px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.card-head h2 {
+  text-transform: uppercase;
+}
+
+.card-head .spacer {
+  margin-left: auto;
+}
+
+.grid {
+  display: grid;
+  gap: 14px;
+}
+
+/* Spaltenzahl ergibt sich aus der Breite — kein Media Query nötig. min(100%, X)
+   sorgt dafür, dass auch unter X px eine einzelne Spalte passt. */
+.grid.auto {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+.grid.auto-sm {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+}
+
+.grid.auto-lg {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+
+/* Zwei Spalten mit fester Gewichtung (Haupt- + Nebenspalte), die unter 900px
+   untereinander rutschen. Verhältnis pro Einsatzort über --split. */
+.split {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, var(--split, 1.5fr)) minmax(0, 1fr);
+}
+
+.split.even {
+  --split: 1fr;
+}
+
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  color: var(--text-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 140ms ease;
+}
+
+.btn:hover {
+  background: var(--panel-2);
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.btn.primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn.primary:hover {
+  background: var(--panel);
+  color: var(--brand);
+  border-color: var(--brand);
+}
+
+.btn.ghost {
+  background: none;
+  border-color: transparent;
+  color: var(--muted);
+}
+
+.btn.ghost:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.btn.danger:hover {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+.btn.icon {
+  padding: 6px;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: var(--panel);
+  color: var(--muted);
+  border-color: var(--border);
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px var(--brand-soft);
+}
+
+.input::placeholder {
+  color: var(--muted);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 64px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.field > label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+.badge.p1 {
+  border-color: color-mix(in srgb, var(--red) 40%, transparent);
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+  color: var(--red);
+}
+
+.badge.p3 {
+  color: var(--muted);
+}
+
+.badge.due-past {
+  border-color: color-mix(in srgb, var(--red) 40%, transparent);
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+  color: var(--red);
+}
+
+.badge.due-today {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.tiny {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Bleibt in einer Zeile — für Paare, die zusammengehören (Label + Wert). */
+.row.nowrap {
+  flex-wrap: nowrap;
+}
+
+/* Nimmt den Restplatz und darf schrumpfen, statt den Container zu sprengen. */
+.grow {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Eingabefelder brechen lieber um, als unbenutzbar schmal zu werden. */
+.grow.input {
+  min-width: 150px;
+}
+
+.empty {
+  padding: 18px 4px;
+  color: var(--muted);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --------------------------------------------------------------- progress */
+
+.progress {
+  height: 6px;
+  background: var(--panel-3);
+  overflow: hidden;
+}
+
+.progress > i {
+  display: block;
+  height: 100%;
+  background: var(--brand);
+  transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.progress.thin {
+  height: 4px;
+}
+
+.progress.green > i {
+  background: var(--green);
+}
+
+.progress.accent > i {
+  background: var(--accent);
+}
+
+.progress.violet > i {
+  background: var(--violet);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.stat .value {
+  font-size: clamp(20px, 2.2vw + 12px, 26px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat .label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ modal */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 12, 15, 0.45);
+  backdrop-filter: blur(2px);
+  display: grid;
+  place-items: start center;
+  padding-top: 12vh;
+  z-index: 100;
+}
+
+.modal {
+  width: min(560px, calc(100vw - 48px));
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.5);
+  animation: pop 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-head h2 {
+  text-transform: uppercase;
+}
+
+.modal-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
+  gap: 12px;
+}
+
+.seg {
+  display: flex;
+  border: 1px solid var(--border-strong);
+  min-width: 0;
+}
+
+.seg button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 6px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--panel);
+  border: none;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.seg button:last-child {
+  border-right: none;
+}
+
+.seg button.on {
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.toast {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: var(--panel);
+  padding: 8px 14px;
+  font-size: 12px;
+  z-index: 200;
+  box-shadow: var(--shadow-hover);
+  animation: pop 160ms ease;
+}
+
+.kbd {
+  border: 1px solid var(--border-strong);
+  padding: 0 4px;
+  font-size: 10px;
+  color: var(--muted);
+  background: var(--panel-2);
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.check {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--panel);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: transparent;
+  transition: all 140ms ease;
+}
+
+.check:hover {
+  border-color: var(--brand);
+}
+
+.check.on {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.toasts {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 200;
+  max-width: min(560px, calc(100vw - 32px));
+}
+
+.toasts .toast {
+  position: static;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+}
+
+.toast.success {
+  background: var(--green);
+  color: #fff;
+}
+.toast.error {
+  background: var(--red);
+  color: #fff;
+}
+
+.toast-detail {
+  margin: 6px 0 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  white-space: pre-wrap;
+  max-height: 120px;
+  overflow: auto;
+  opacity: .85;
+}
+
+/* ── Ablegefläche für Dateien ─────────────────────────────────────────────── */
+.dropzone {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 22px 16px;
+  border: 1px dashed var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.dropzone:hover {
+  border-color: var(--brand);
+}
+.dropzone.over {
+  border-color: var(--brand);
+  background: var(--panel-3);
+  color: var(--text);
+}
+.dropzone.busy {
+  opacity: .6;
+  pointer-events: none;
+}
+.dropzone strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* ── Tabellen ─────────────────────────────────────────────────────────────
+   Bewusst schlicht: sobald Sortieren/Spaltenwahl gebraucht wird, kommt
+   TanStack Table dazu — kopflos, dieses CSS bleibt gültig. */
+.table-wrap {
+  overflow: auto;
+  max-height: 320px;
+  border: 1px solid var(--border);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.table th,
+.table td {
+  padding: 5px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  background: var(--panel-3);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.table tbody tr:hover {
+  background: var(--panel-2);
+}
+
+/* ── Jobs ─────────────────────────────────────────────────────────────────── */
+.jobs {
+  display: flex;
+  flex-direction: column;
+}
+
+.job {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.job:last-child {
+  border-bottom: none;
+}
+.job-state {
+  display: inline-flex;
+  color: var(--muted);
+}
+.job-state.done {
+  color: var(--green);
+}
+.job-state.failed {
+  color: var(--red);
+}
+.job-state.cancelled {
+  color: var(--amber);
+}
+.job-state.running,
+.job-state.queued {
+  color: var(--brand);
+}
+
+/* ── Protokoll- und Fehlertexte ───────────────────────────────────────────── */
+.log {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Schlüssel-Wert-Liste („Über") ────────────────────────────────────────── */
+.kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.kv dt {
+  color: var(--muted);
+}
+.kv dd {
+  margin: 0;
+}
+
+/* Suchfeld mit Lupe: das Icon liegt im Feld, nicht darüber. */
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search > svg {
+  position: absolute;
+  left: 9px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.search > .input {
+  width: 100%;
+  padding-left: 30px;
+}
+
+/* ── Aufklappmenü (Radix DropdownMenu) ────────────────────────────────────── */
+/* Radix bringt kein CSS mit: Positionierung kommt über Inline-Styles am
+   Content-Element, das Aussehen vollständig von hier. */
+.menu {
+  min-width: 180px;
+  padding: 4px;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-hover);
+  z-index: 120;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+
+/* Radix markiert den Eintrag unter Maus *und* Tastatur mit data-highlighted —
+   ein eigener :hover würde die Tastaturbedienung übergehen. */
+.menu-item[data-highlighted] {
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+}
+
+.menu-item[data-disabled] {
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.menu-item.danger[data-highlighted] {
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+  color: var(--red);
+}
+
+.menu-item .kbd {
+  margin-left: auto;
+}
+
+.menu-check {
+  display: inline-flex;
+  width: 14px;
+  color: var(--brand);
+}
+
+.menu-label {
+  padding: 6px 8px 4px;
+  font-size: 10px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.menu-sep {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--border);
+}
+
+/* ── Virtualisierte Tabelle ───────────────────────────────────────────────── */
+/* `table-layout: fixed` plus feste Breiten aus columnDef.meta: Ohne das
+   berechnet der Browser die Spaltenbreiten aus den *sichtbaren* Zeilen — beim
+   Scrollen springen dann die Spalten. */
+.table-wrap.virtual {
+  max-height: none;
+  overflow: auto;
+  position: relative;
+}
+
+.table.grid-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.table.grid-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Kopf- und Datenzeilen müssen mit **derselben** Breitenlogik rechnen: Bei
+   `table-layout: fixed` verteilt der Browser übrige Tabellenbreite auf die
+   Kopfspalten, die Datenzeilen (Flex, feste Breiten aus columnDef.meta) dehnen
+   sich aber nicht mit — die Überschrift stünde dann neben ihrer Spalte. */
+.table.grid-table thead tr {
+  display: flex;
+}
+
+.table.grid-table thead th {
+  overflow: hidden;
+}
+
+.table.grid-table tbody tr {
+  display: flex;
+  align-items: center;
+}
+
+.table.grid-table tbody td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Sortierbarer Spaltenkopf: sieht aus wie Text, verhält sich wie ein Knopf. */
+.th-sort {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.th-sort:hover {
+  color: var(--brand);
+}
+
+/* ── Filterzeile, Filterleiste, Blätterleiste ─────────────────────────────── */
+/* Die zweite Kopfzeile trägt die Spaltenfilter. Sie liegt im selben `thead`
+   und klebt deshalb mit oben fest — ohne Sonderregel, weil `position: sticky`
+   auf dem ganzen `thead` sitzt. */
+.table.grid-table thead .filter-row th {
+  padding: 4px 6px;
+  background: var(--panel-2);
+  text-transform: none;
+  letter-spacing: normal;
+  vertical-align: top;
+}
+
+.th-filter {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.input.tiny,
+.select.tiny {
+  padding: 3px 6px;
+  font-size: 11px;
+}
+
+/* Datumsfelder sind im WebKit breiter als ihr Inhalt — sonst quetschen sie
+   die Spalte auf, für die sie eigentlich nur ein Filter sind. */
+.th-filter .input,
+.th-filter .select {
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  background: var(--panel-2);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 0 2px;
+}
+
+.pager-pages {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Seitenzahlen sind unterschiedlich breit — feste Mindestbreite, sonst wandert
+   die ganze Leiste beim Blättern von 9 auf 10. */
+.pager-pages .btn.num {
+  min-width: 28px;
+  justify-content: center;
+  padding: 4px 6px;
+}
+
+.pager-pages .btn.on {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.pager-gap {
+  padding: 0 2px;
+  color: var(--muted);
+}
+
+/* =========================================================== Betrachter-Rahmen
+
+   Drei Spalten: Verlauf — Dokument — Inhaltsverzeichnis. Beide Seitenleisten
+   sind wegschaltbar, die Mitte ist die einzige Spalte, die scrollt.
+
+   Bewusst Flex, nicht Grid: Grid-Spalten sind ortsfest, die Seitenleisten aber
+   nicht immer da. Ohne Verlauf rutschte das Dokument in die erste Spalte
+   (`auto`) und schrumpfte auf seinen Inhalt, während das Inhaltsverzeichnis in
+   der `1fr`-Spalte landete und links in einer viel zu breiten Spalte klebte —
+   genau das Bild aus dem Fehlerbericht. Flex kennt keine festen Plätze: die
+   Mitte nimmt, was übrig ist, die Leisten bleiben an ihren Rändern.
+
+   `min-width: 0` auf der Mitte ist Pflicht — ohne das wächst ein Flex-Element
+   auf `min-content`, und ein breiter Codeblock würde die ganze App horizontal
+   scrollen lassen. -------------------------------------------------------- */
+
+.shell {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  /* `minmax(0, 1fr)` statt der impliziten `auto`-Spalte: eine `auto`-Spalte hat
+     den Mindestinhalt ihres größten Elements als Untergrenze. Die Kopfzeile
+     enthält den vollen Dateipfad, und der bricht nicht um — die ganze App wurde
+     dadurch breiter als das Fenster, und alles Rechte (Knöpfe, Verzeichnis,
+     Zeilenenden) lag außerhalb. `minmax(0, …)` nimmt diese Untergrenze weg. */
+  grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.body {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ Kopfzeile */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 12px 8px 90px; /* links Platz für die Fensterknöpfe von macOS */
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  /* Bei `transparentTitlebar` ist die Kopfzeile der Griff, an dem das Fenster
+     hängt — interaktive Elemente darin müssen ausgenommen werden. */
+  -webkit-app-region: drag;
+}
+
+.topbar button,
+.topbar .input,
+.topbar .badge {
+  -webkit-app-region: no-drag;
+}
+
+.topbar-nav,
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  /* Die Knöpfe geben nicht nach — nachgeben soll der Titel, der dafür
+     `min-width: 0` und `text-overflow: ellipsis` mitbringt. */
+  flex: 0 0 auto;
+}
+
+.topbar-title {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.topbar-title h1 {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-path {
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+}
+
+.topbar-path:hover {
+  color: var(--brand);
+  text-decoration: underline;
+}
+
+.badge.warn {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------- Seitenleisten */
+
+/* Feste Breiten, bewusst keine `vw`-Einheiten: in diesem Webview rechnet `vw`
+   gegen Gerätepixel (bei dpr 2 also doppelt), ein `clamp(220px, 17vw, 300px)`
+   landete deshalb in jedem Fenster auf seinem Maximum. Gemessen, nicht geraten.
+
+   Nicht schrumpfen: eine auf 60 px gequetschte Liste ist nutzlos. Wird das
+   Fenster zu schmal, verschwindet die Leiste ganz (Medienabfragen unten). */
+.side {
+  flex: 0 0 260px;
+  /* `min-width: 0` hebt die automatische Mindestbreite (= Mindestinhalt) auf.
+     Ohne sie wurde die Leiste vom längsten Pfad in der Liste aufgeblasen —
+     gemessen 299 px statt der angesagten 260. Abgeschnitten wird stattdessen
+     der Text (siehe `.side-item-sub`). */
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--sidebar);
+  font-size: 12.5px;
+}
+
+.side.history {
+  border-right: 1px solid var(--border);
+}
+
+.side.toc {
+  flex-basis: 230px;
+  border-left: 1px solid var(--border);
+}
+
+.side-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 10px 8px;
+  color: var(--text-soft);
+}
+
+.side-head strong {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.side-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 8px;
+}
+
+.side-search .input {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  font-size: 12.5px;
+}
+
+.side-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 6px 10px;
+}
+
+.side-label {
+  padding: 10px 6px 4px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.side-empty {
+  padding: 8px 6px;
+}
+
+.side-foot {
+  border-top: 1px solid var(--border);
+  padding: 6px;
+}
+
+.tiny-btn {
+  font-size: 11.5px;
+  height: 26px;
+  padding: 0 8px;
+}
+
+/* Eintrag im Verlauf: Titel + Herkunft, Aktionen erst beim Überfahren. */
+.side-item {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid transparent;
+}
+
+.side-item:hover {
+  background: var(--panel-2);
+}
+
+.side-item.active {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+}
+
+.side-item.missing .side-item-title {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.side-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 8px;
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.side-item-title {
+  font-weight: 550;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.side-item-sub {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.side-item-actions {
+  display: none;
+  align-items: center;
+  padding-right: 4px;
+}
+
+.side-item:hover .side-item-actions,
+.side-item.active .side-item-actions {
+  display: flex;
+}
+
+/* Inhaltsverzeichnis */
+.toc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.toc-item {
+  background: none;
+  border: 0;
+  border-left: 2px solid transparent;
+  text-align: left;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: var(--text-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toc-item:hover {
+  color: var(--text);
+  background: var(--panel-2);
+}
+
+.toc-item.active {
+  border-left-color: var(--brand);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------- Dokument */
+
+.doc-scroll {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+/* Lesebreite: Zeilenlänge ist der wichtigste Hebel für Lesbarkeit. „weit"
+   nutzt das ganze Fenster — für breite Tabellen und große Diagramme. */
+.doc {
+  --doc-width: 60em;
+  /* Die Lesebreite in `em` statt Pixeln: Sie soll der Schriftgröße folgen.
+     Wer über ⌘+ vergrößert, will längere Zeilen sehen, nicht dieselbe
+     Pixelbreite mit halb so vielen Wörtern darin. */
+  max-width: min(var(--doc-width), 100%);
+  margin: 0 auto;
+  padding: 28px 32px 120px;
+  font-size: calc(15px * var(--doc-scale, 1));
+  line-height: 1.65;
+}
+
+.reading-schmal .doc {
+  --doc-width: 46em;
+}
+
+.reading-weit .doc {
+  --doc-width: 100%;
+}
+
+.doc-empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--muted);
+  text-align: center;
+  padding: 24px;
+}
+
+.doc-empty h2 {
+  font-size: 16px;
+  color: var(--text);
+}
+
+.shortcut-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.warn-icon {
+  color: var(--amber);
+}
+
+/* YAML-Vorspann als Tabelle über dem Text — Metadaten, nicht Inhalt. */
+.frontmatter {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 2px 14px;
+  margin-bottom: 24px;
+  padding: 10px 12px;
+  background: var(--panel-2);
+  border-left: 2px solid var(--border-strong);
+  font-size: 12px;
+}
+
+.frontmatter > div {
+  display: contents;
+}
+
+.frontmatter dt {
+  color: var(--muted);
+}
+
+.frontmatter dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================== Markdown-Typografie
+   Der einzige Bereich der App mit klassischer Fließtext-Gestaltung. Alle Maße
+   hängen an `--doc-scale` (Menü ▸ Ansicht ▸ Größer/Kleiner).
+   ------------------------------------------------------------------------- */
+
+.markdown {
+  overflow-wrap: break-word;
+}
+
+.markdown > *:first-child {
+  margin-top: 0;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  position: relative;
+  margin: 1.6em 0 0.6em;
+  line-height: 1.3;
+  font-weight: 680;
+  letter-spacing: -0.01em;
+  scroll-margin-top: 16px;
+}
+
+.markdown h1 {
+  font-size: 1.9em;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--border);
+}
+
+.markdown h2 {
+  font-size: 1.45em;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  padding-bottom: 0.2em;
+  border-bottom: 1px solid var(--border);
+}
+
+.markdown h3 {
+  font-size: 1.2em;
+}
+
+.markdown h4 {
+  font-size: 1.05em;
+}
+
+.markdown h5,
+.markdown h6 {
+  font-size: 1em;
+  color: var(--text-soft);
+}
+
+/* Der Anker erscheint erst beim Überfahren — sichtbar wäre er nur Dekoration. */
+.markdown .anchor {
+  position: absolute;
+  left: -0.8em;
+  opacity: 0;
+  text-decoration: none;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.markdown h1:hover .anchor,
+.markdown h2:hover .anchor,
+.markdown h3:hover .anchor,
+.markdown h4:hover .anchor {
+  opacity: 1;
+}
+
+.markdown p,
+.markdown ul,
+.markdown ol,
+.markdown blockquote,
+.markdown table,
+.markdown pre,
+.markdown .diagram {
+  margin: 0 0 1em;
+}
+
+.markdown ul,
+.markdown ol {
+  padding-left: 1.5em;
+}
+
+.markdown li {
+  margin: 0.25em 0;
+}
+
+.markdown li > ul,
+.markdown li > ol {
+  margin: 0.25em 0;
+}
+
+/* Aufgabenlisten (`- [ ]`) ohne Aufzählungszeichen. */
+.markdown li:has(> input[type="checkbox"]) {
+  list-style: none;
+  margin-left: -1.2em;
+}
+
+.markdown input[type="checkbox"] {
+  margin-right: 0.5em;
+  accent-color: var(--brand);
+}
+
+.markdown a {
+  color: var(--brand);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--brand) 35%, transparent);
+}
+
+.markdown a:hover {
+  border-bottom-color: var(--brand);
+}
+
+.markdown blockquote {
+  padding: 0.2em 0 0.2em 1em;
+  border-left: 3px solid var(--border-strong);
+  color: var(--text-soft);
+}
+
+.markdown blockquote > *:last-child {
+  margin-bottom: 0;
+}
+
+.markdown hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 2em 0;
+}
+
+.markdown img,
+.md-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.5em 0;
+  background: var(--panel-2);
+}
+
+/* Breite Tabellen scrollen in sich selbst, nicht die Seite. */
+.markdown table {
+  display: block;
+  overflow-x: auto;
+  width: max-content;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92em;
+}
+
+.markdown th,
+.markdown td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown thead th {
+  background: var(--panel-2);
+  font-weight: 650;
+}
+
+.markdown tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--panel-2) 45%, transparent);
+}
+
+/* Code im Fließtext */
+.markdown code {
+  font-family: "SF Mono", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  padding: 0.08em 0.35em;
+}
+
+/* Codeblock: eigene Umrandung, Sprache oben rechts, Kopieren beim Überfahren. */
+.code-block {
+  position: relative;
+  margin: 0 0 1.2em;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+}
+
+.code-block::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 2px 8px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+}
+
+.code-block code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 0.85em;
+  line-height: 1.55;
+}
+
+.code-copy {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  opacity: 0;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  color: var(--text-soft);
+  font-size: 11px;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+
+.code-block:hover .code-copy {
+  opacity: 1;
+}
+
+.code-copy:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+/* Fußnoten (marked-footnote) */
+.markdown .footnotes {
+  margin-top: 2.5em;
+  padding-top: 1em;
+  border-top: 1px solid var(--border);
+  font-size: 0.9em;
+  color: var(--text-soft);
+}
+
+/* Mermaid */
+.diagram {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  overflow-x: auto;
+}
+
+.diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.diagram.failed {
+  display: block;
+  border-color: var(--red);
+}
+
+.diagram-error {
+  color: var(--red);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+/* KaTeX: abgesetzte Formeln dürfen scrollen statt zu überlaufen. */
+.markdown .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0;
+}
+
+/* --------------------------------------------------------------- Suchleiste */
+
+.findbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.findbar .input {
+  flex: 1;
+  height: 28px;
+}
+
+/* ---------------------------------------------------------------- Kleinkram */
+
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0;
+  cursor: pointer;
+}
+
+.check-row input {
+  margin-top: 3px;
+  accent-color: var(--brand);
+}
+
+.block {
+  display: block;
+}
+
+.kv-row {
+  display: contents;
+}
+
+/* Unter 1000 px wird es eng: erst das Inhaltsverzeichnis, dann der Verlauf. */
+@media (max-width: 1000px) {
+  .side.toc {
+    display: none;
+  }
+
+  .doc {
+    padding: 22px 22px 100px;
+  }
+}
+
+@media (max-width: 860px) {
+  .side.history {
+    display: none;
+  }
+
+  .hide-narrow {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ Drucken
+
+   Gedruckt (oder als PDF gesichert) wird das Dokument, nicht die Anwendung.
+   ------------------------------------------------------------------------- */
+
+@media print {
+  .topbar,
+  .side,
+  .findbar,
+  .toasts,
+  .code-copy {
+    display: none !important;
+  }
+
+  html,
+  body,
+  #root,
+  .shell,
+  .body,
+  .doc-scroll {
+    height: auto;
+    overflow: visible;
+    background: #fff;
+  }
+
+  .doc {
+    max-width: none;
+    padding: 0;
+    color: #000;
+  }
+
+  .markdown a {
+    color: #000;
+    border-bottom: 0;
+  }
+
+  /* Überschriften nicht von ihrem Absatz trennen. */
+  .markdown h1,
+  .markdown h2,
+  .markdown h3 {
+    break-after: avoid;
+  }
+
+  .code-block,
+  .diagram,
+  .markdown table,
+  .markdown img {
+    break-inside: avoid;
+  }
+}
+
+/* ======================================================= Syntaxhervorhebung
+
+   Bewusst **kein** fertiges highlight.js-Theme: Die mitgelieferten Themes gibt
+   es je einmal für hell und dunkel, und beide gleichzeitig zu laden hieße, sie
+   gegeneinander zu überschreiben. Die paar Klassen, die zählen, hängen hier an
+   den Token-Farben — damit folgt der Code demselben Umschalter wie der Rest.
+   ------------------------------------------------------------------------- */
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-doctag,
+.hljs-type,
+.hljs-name,
+.hljs-strong {
+  color: var(--violet);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-attribute,
+.hljs-meta .hljs-string {
+  color: var(--green);
+}
+
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link,
+.hljs-selector-attr,
+.hljs-selector-pseudo,
+.hljs-template-variable,
+.hljs-variable {
+  color: var(--accent);
+}
+
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.function_,
+.hljs-built_in,
+.hljs-class .hljs-title {
+  color: var(--brand);
+}
+
+.hljs-attr,
+.hljs-property,
+.hljs-selector-class,
+.hljs-selector-id,
+.hljs-params {
+  color: var(--text-soft);
+}
+
+.hljs-meta,
+.hljs-deletion {
+  color: var(--red);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}

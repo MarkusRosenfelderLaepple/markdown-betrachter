@@ -1,0 +1,14 @@
+{
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "icons": "deno run -A build-icons.ts",
+    "check": "deno fmt && deno lint && deno check build-icons.ts"
+  },
+  "imports": {
+    "@resvg/resvg-js": "npm:@resvg/resvg-js@^2.6.2",
+    "@std/path": "jsr:@std/path@^1.1.2"
+  },
+  "fmt": {
+    "lineWidth": 110
+  }
+}

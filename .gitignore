@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build output
+ui/dist/
+ui/.vite/
+dist-app/
+*.app/
+
+# Local database
+*.db
+*.db-wal
+*.db-shm
+
+# OS
+.DS_Store
