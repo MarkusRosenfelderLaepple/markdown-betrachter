@@ -4,24 +4,41 @@ Destillat der laepple-Design-Guidelines, reduziert auf das, was **ohne** Tailwin
 `@laepple/*`-Komponenten gilt. Die Regeln stecken bereits in `ui/src/styles.css` und
 `ui/src/components/atoms.tsx` — das hier ist die Begründung dazu.
 
-## Die sieben Regeln
+## Die zehn Regeln
 
 1. **Nur Tokens, keine Literalfarben.** Jede Farbe kommt aus einer CSS-Variable (`var(--brand)`,
    `var(--muted)`, `var(--red)`). Wer `#3b82f6` in eine Komponente schreibt, bricht Dark Mode und Theming.
-2. **Scharfe Kanten.** `border-radius: 0` überall. Rundungen wirken in dichten Tool-UIs unruhig.
-3. **Rahmen vor Schatten.** Jeder Container hat 1px Rahmen; der Schatten gibt nur Tiefe dazu und ersetzt ihn
-   nie.
-4. **Status über Farbe, konsistent.** Grün = erledigt/erfolgreich · Blau = Info/Anzahl · Amber = offen/Warnung
+2. **Radien nur aus der Leiter.** `--r-xs` 6 · `--r-sm` 9 · `--r` 12 · `--r-lg` 16 · `--r-xl` 22 · `--r-pill`.
+   Ein neuer Wert daneben ist fast immer ein Denkfehler — eine der sechs Stufen passt.
+3. **Tiefe statt Trennstriche, Rahmen nach innen.** Container tragen eine Stufe `--e1` … `--e4`; der Rahmen
+   sitzt als `inset 0 0 0 1px var(--border)` **im** Schatten. Grund: Ein echter `border` liegt außerhalb des
+   Radius und ragt an runden Ecken als Zacke heraus. Aus demselben Grund sind Trennlinien in Listen
+   Geschwister-`inset`s (`.side-item`, `.tree-row`, `.toc-item`) und Statusstreifen `inset 3px 0 0 <Farbe>`.
+   Echter `border` bleibt nur, wo er inhaltlich gebraucht wird: gestrichelt (`.dropzone`) und wo eine
+   Komponente die Farbe per Inline-Style setzt.
+4. **Glas nur an der Anwendung, nicht am Dokument.** `backdrop-filter` steht auf Kopfzeile, Seitenleisten,
+   Dialogen, Menüs, Karten und der Suchleiste. **Nicht** auf Listenzeilen — Baum und Verzeichnis haben schnell
+   dreistellig viele, und das wären genauso viele Unschärfeebenen pro Bild; die bekommen eine durchsichtige
+   Füllung ohne Filter. Und **nicht** auf dem Dokumentblatt: siehe unten, „Die eine Ausnahme". Glas braucht
+   außerdem immer etwas Farbiges dahinter — der Verlauf auf dem `body` ist Voraussetzung, nicht Zierde, und
+   `.shell` darf deshalb keinen eigenen Hintergrund setzen.
+5. **Drei Flächenreihen, klar getrennt.** `--panel` … `--panel-3` sind deckend (Dokumentblatt, hinter Häkchen,
+   Bildflächen, `color: var(--panel)` in Toasts). `--glass*` sind durchsichtig und wollen einen `--blur`.
+   `--well` ist die _vertiefte_ Fläche (Rinne des Umschalters, Codeblock, Vorspann) — eigene Reihe, weil
+   `--glass-soft` aufhellt und eine Wanne abdunkeln muss.
+6. **Status über Farbe, konsistent.** Grün = erledigt/erfolgreich · Blau = Info/Anzahl · Amber = offen/Warnung
    · Rot = destruktiv/überfällig · Grau = inaktiv.
-5. **Icons: nur Lucide, keine Emojis.** Größen 12 px (in `btn.icon`), 14–15 px (Zeilen, Buttons), 16–20 px
+7. **Icons: nur Lucide, keine Emojis.** Größen 12 px (in `btn.icon`), 14–15 px (Zeilen, Buttons), 16–20 px
    (Kartenköpfe, Leerzustände). Icon-only-Buttons brauchen `title`.
-6. **Dark Mode ist abgeleitet, nicht parallel.** Nur die Tokens unter `:root[data-theme="dark"]` werden neu
+8. **Dark Mode ist abgeleitet, nicht parallel.** Nur die Tokens unter `:root[data-theme="dark"]` werden neu
    belegt — keine zweite Regelmenge, keine `.dark`-Varianten in Komponenten.
-7. **Typografie sparsam.** 14 px Standard (dichte UI), 11–12 px für Meta/Badges, 24 px für die
-   Seitenüberschrift. Zahlen mit `font-variant-numeric: tabular-nums` (Klasse `.num`), damit Werte nicht
-   springen.
-8. **Jedes Fenster ist schmal genug.** Ein Desktop-Fenster lässt sich auf 400 px ziehen — das ist kein
-   Sonderfall, sondern der Normalfall. Nichts darf horizontal überlaufen; wo es eng wird, wird gestapelt.
+9. **Typografie sparsam.** Systemschrift (`-apple-system` …), 14 px Standard (dichte UI), 11–12 px für
+   Meta/Badges, 24 px für die Seitenüberschrift. Zahlen mit `font-variant-numeric: tabular-nums` (Klasse
+   `.num`), damit Werte nicht springen. Versalien mit Sperrung bleiben den **kleinsten** Etiketten
+   (`.side-head strong`, `.side-label`, `.field > label`, `.stat .label`, `.menu-label`) — Überschriften
+   tragen sie nicht mehr, das war der Hauptgrund für den altbackenen Eindruck.
+10. **Jedes Fenster ist schmal genug.** Ein Desktop-Fenster lässt sich auf 400 px ziehen — das ist kein
+    Sonderfall, sondern der Normalfall. Nichts darf horizontal überlaufen; wo es eng wird, wird gestapelt.
 
 ## Was das Template mitbringt
 
@@ -35,8 +52,10 @@ Destillat der laepple-Design-Guidelines, reduziert auf das, was **ohne** Tailwin
 | Hilfsklassen   | `.row` (+ `.nowrap`), `.grow`, `.muted`, `.tiny`, `.num`, `.empty`, `.kbd`, `.toast`, `.spin`                  |
 | React-Atome    | `Card`, `Modal`, `Segmented`, `Empty`, `ProgressBar`, `ProgressRing`                                           |
 
-Buttons invertieren beim Hover (Blau gefüllt → weiß mit blauem Text), `:disabled` bedeutet 45 % Deckkraft und
-`cursor: not-allowed`.
+Buttons sind Pillen, die beim Hover einen Pixel steigen (`translateY(-1px)`) und beim `:active` zurückkommen.
+Der Hauptknopf bleibt dabei **gefüllt und wird heller** — vorher klappte er auf weiß mit blauem Text um, und
+damit sah die wichtigste Aktion im Moment der Berührung schwächer aus als im Ruhezustand. `:disabled` bedeutet
+45 % Deckkraft und `cursor: not-allowed`.
 
 ## Bewusst nicht übernommen
 
@@ -125,6 +144,26 @@ Markdown-Text (`.markdown` in `ui/src/styles.css`) folgt bewusst anderen Regeln:
 begrenzte Zeilenlänge (`--doc-width`, umschaltbar), Überschriftenhierarchie mit Trennlinien. Ein Dokument ist
 kein Werkzeugfenster, und dichte Tool-Typografie macht längere Texte unlesbar.
 
+**Das Blatt ist Papier, kein Glas.** `.doc` ist eine **deckende** `--panel`-Fläche mit `--r-xl` und `--e2`,
+die über dem Verlauf liegt. Das ist die eine Stelle, an der der Effekt bewusst aufhört: Ein langer Fließtext
+über einer verwischten Fläche liest sich schlechter, und Lesen ist der einzige Zweck dieser Spalte. In der
+Leseansicht „weit" fällt das Blatt weg (`margin`, Radius und Schatten auf 0) — bei voller Fensterbreite wäre
+es nur noch ein Kasten um das Fenster, und dann zählt die Fläche statt der Metapher. Beim Drucken fällt es aus
+demselben Grund weg.
+
 Was auch dort gilt: **nur Tokens** (auch die Syntaxhervorhebung hängt an `--brand`, `--green`, `--accent` —
-deshalb kein fertiges highlight.js-Theme), **scharfe Kanten** und **Rahmen vor Schatten**. Die Schriftgröße
-hängt an einer einzigen Variablen `--doc-scale`, die das Menü setzt.
+deshalb kein fertiges highlight.js-Theme) und **Rahmen nach innen** statt außen. Die Schriftgröße hängt an
+einer einzigen Variablen `--doc-scale`, die das Menü setzt.
+
+Zwei Dinge im Dokument folgen absichtlich **nicht** Regel 3:
+
+- Die Linien unter `h1`/`h2` bleiben. In einem Dokument ordnen sie die Hierarchie, anders als in der
+  Anwendung, wo Trennstriche durch Tiefe ersetzt wurden. Sie laufen über `border-image` nach rechts aus, statt
+  hart an der Spaltenkante zu enden.
+- Tabellen im Dokument stehen auf `border-collapse: separate` mit `border-spacing: 0`. Bei `collapse` teilen
+  sich die Zellen die Kanten und der Radius am Tabellenrahmen greift nicht; die Zellenlinien sind deshalb
+  einseitig (`inset -1px -1px 0`), und letzte Spalte und letzte Zeile nehmen ihre Linie wieder heraus, damit
+  dort nicht zwei auf einem Pixel liegen.
+
+Die Treffermarkierung der Suche bleibt rechteckig: `::highlight()` nimmt nur Farbe, Hintergrund,
+Unterstreichung und Textschatten an — ein `border-radius` würde stillschweigend verworfen.

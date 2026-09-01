@@ -1,27 +1,84 @@
-/* Design-Basis: scharfe Kanten, 1px Rahmen vor Schatten, Token-Farben, Light/Dark. */
+/* Design-Basis: weiche Radien, Glasflächen über einem Farbverlauf, gestufte
+   Tiefe, Token-Farben, Light/Dark.
+
+   Drei Tokenreihen tragen den Look, und es lohnt zu wissen, welche wofür:
+
+   * `--panel` … `--panel-3` sind **deckend**. Sie liegen dort, wo Transparenz
+     schadet: hinter Häkchen, in Toast-Textfarben (`color: var(--panel)`), auf
+     Bildflächen — und vor allem auf dem Dokumentblatt.
+   * `--glass`, `--glass-strong`, `--glass-soft` sind **durchsichtig** und
+     gehören auf die Anwendungsflächen (Kopfzeile, Seitenleisten, Dialoge) —
+     immer zusammen mit `backdrop-filter: var(--blur)`, sonst fehlt die
+     Milchglas-Wirkung und es bleibt bloß blasser Hintergrund.
+   * `--e1` … `--e4` sind die Tiefenstufen. Eine Fläche nimmt genau eine.
+
+   Zwei Grenzen, die in dieser App wichtiger sind als in einer Listen-App:
+
+   1. **Das Dokument ist Papier, kein Glas.** Der gerenderte Text liegt als
+      deckendes Blatt (`--panel`) mit Radius und Tiefe über dem Verlauf. Ein
+      langer Fließtext auf einer durchsichtigen Fläche ist schlechter zu lesen,
+      und Lesbarkeit schlägt hier jeden Effekt. Glas bekommt nur die
+      **Anwendung** ringsherum.
+   2. **`backdrop-filter` nicht auf Listenzeilen.** Baum, Verlauf und
+      Inhaltsverzeichnis haben schnell dreistellig viele Zeilen; das wären
+      genauso viele Unschärfeebenen pro Bild. Diese Zeilen bekommen eine leicht
+      durchsichtige Füllung ohne Filter. */
 
 :root {
-  --bg: #f4f6f8;
+  --bg: #e9edf4;
   --panel: #ffffff;
-  --panel-2: #f1f5f9;
-  --panel-3: #e6ebf0;
-  --border: #e0e5ea;
-  --border-strong: #c9d1d9;
-  --text: #232b33;
-  --text-soft: #4b5563;
-  --muted: #7b8794;
-  --brand: #0052a3;
-  --brand-deep: #00376d;
-  --brand-soft: #e8f1fb;
-  --accent: #f46610;
-  --accent-soft: #fdeee3;
-  --green: #10b981;
+  --panel-2: #f2f5fa;
+  --panel-3: #e5eaf2;
+  --border: rgba(16, 32, 64, 0.09);
+  --border-strong: rgba(16, 32, 64, 0.16);
+  --text: #16202b;
+  --text-soft: #46525f;
+  --muted: #78859a;
+  --brand: #0b62d6;
+  --brand-deep: #063f8e;
+  --brand-soft: rgba(11, 98, 214, 0.11);
+  --accent: #f4650f;
+  --accent-soft: rgba(244, 101, 15, 0.13);
+  --green: #0fb87c;
   --amber: #f59e0b;
   --red: #ef4444;
   --violet: #8b5cf6;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px -16px rgba(16, 24, 40, 0.18);
-  --shadow-hover: 0 1px 2px rgba(16, 24, 40, 0.08), 0 12px 28px -14px rgba(16, 24, 40, 0.24);
-  --sidebar: #ffffff;
+  --teal: #0d9488;
+
+  /* Glas: Füllung, Kantenlicht und die zwei Unschärfegrade. */
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-strong: rgba(255, 255, 255, 0.8);
+  --glass-soft: rgba(255, 255, 255, 0.4);
+  --glass-line: rgba(255, 255, 255, 0.75);
+  /* Vertiefte Fläche (Rinne des Umschalters, Filterleiste, Codeblock).
+     Eigene Reihe, weil `--glass-soft` aufhellt und eine Wanne abdunkeln muss —
+     im Dark Mode wäre sie mit einem Weißschleier von 4 % unsichtbar. */
+  --well: rgba(16, 32, 64, 0.04);
+  --blur: saturate(180%) blur(20px);
+  --blur-lg: saturate(180%) blur(34px);
+
+  /* Tiefe in vier Stufen: ruhend, gehoben, schwebend, Dialog. */
+  --e1: 0 1px 2px rgba(16, 32, 64, 0.05), 0 2px 8px -2px rgba(16, 32, 64, 0.06);
+  --e2: 0 1px 2px rgba(16, 32, 64, 0.06), 0 10px 24px -10px rgba(16, 32, 64, 0.14);
+  --e3: 0 2px 4px rgba(16, 32, 64, 0.07), 0 18px 40px -14px rgba(16, 32, 64, 0.22);
+  --e4: 0 8px 20px -8px rgba(10, 20, 40, 0.18), 0 34px 76px -24px rgba(10, 20, 40, 0.4);
+  --ring: 0 0 0 3px color-mix(in srgb, var(--brand) 20%, transparent);
+  --glow-brand: 0 6px 18px -8px color-mix(in srgb, var(--brand) 65%, transparent);
+
+  /* `--shadow` und `--shadow-hover` bleiben als Namen bestehen (sie stecken in
+     Komponenten), zeigen aber jetzt auf die Stufen. */
+  --shadow: var(--e1);
+  --shadow-hover: var(--e2);
+  --sidebar: rgba(255, 255, 255, 0.52);
+
+  /* Radienleiter. Alles greift hierauf zu — ein Wert je Größenklasse. */
+  --r-xs: 6px;
+  --r-sm: 9px;
+  --r: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+
   --find: #ffe98a;
   --find-text: #232b33;
   --find-now: #f59e0b;
@@ -30,27 +87,37 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #101315;
-  --panel: #191d20;
-  --panel-2: #21262a;
-  --panel-3: #2a3035;
-  --border: #2c3237;
-  --border-strong: #3d454c;
-  --text: #e8ecef;
-  --text-soft: #c3cad1;
-  --muted: #8b959e;
-  --brand: #4d9bea;
-  --brand-deep: #79b6f5;
-  --brand-soft: #16283c;
+  --bg: #0a0d13;
+  --panel: #161b23;
+  --panel-2: #1d232d;
+  --panel-3: #262e3a;
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.17);
+  --text: #e9eef5;
+  --text-soft: #bdc8d6;
+  --muted: #8593a6;
+  --brand: #57a5ff;
+  --brand-deep: #8ec4ff;
+  --brand-soft: rgba(87, 165, 255, 0.15);
   --accent: #ff8a3d;
-  --accent-soft: #35220f;
+  --accent-soft: rgba(255, 138, 61, 0.16);
   --green: #34d399;
   --amber: #fbbf24;
   --red: #f87171;
   --violet: #a78bfa;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px -18px rgba(0, 0, 0, 0.7);
-  --shadow-hover: 0 1px 2px rgba(0, 0, 0, 0.5), 0 14px 32px -16px rgba(0, 0, 0, 0.8);
-  --sidebar: #15181b;
+  --teal: #2dd4bf;
+
+  --glass: rgba(31, 39, 51, 0.6);
+  --glass-strong: rgba(24, 31, 41, 0.84);
+  --glass-soft: rgba(255, 255, 255, 0.04);
+  --glass-line: rgba(255, 255, 255, 0.09);
+  --well: rgba(0, 0, 0, 0.26);
+
+  --e1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 8px -2px rgba(0, 0, 0, 0.4);
+  --e2: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 28px -12px rgba(0, 0, 0, 0.75);
+  --e3: 0 2px 4px rgba(0, 0, 0, 0.55), 0 20px 44px -16px rgba(0, 0, 0, 0.85);
+  --e4: 0 10px 24px -10px rgba(0, 0, 0, 0.7), 0 40px 80px -28px rgba(0, 0, 0, 0.95);
+  --sidebar: rgba(17, 22, 30, 0.58);
   --find: #7a5f0d;
   --find-text: #fff4cf;
   --find-now: #ffb020;
@@ -70,14 +137,43 @@ body,
   height: 100%;
 }
 
+/* Der Verlaufsteppich ist **Voraussetzung** für das Glas, nicht Zierde: Ohne
+   etwas Farbiges dahinter hat `backdrop-filter` nichts zu verwischen, und die
+   Leisten sähen nur blass aus. Dezenter gehalten als in einer Listen-App — der
+   Blick soll auf dem Dokumentblatt landen, nicht am Rand hängen bleiben. */
 body {
-  background: var(--bg);
+  background:
+    radial-gradient(
+    1100px 700px at 6% -14%,
+    color-mix(in srgb, var(--brand) 16%, transparent),
+    transparent 60%
+  ),
+    radial-gradient(
+    820px 560px at 96% -6%,
+    color-mix(in srgb, var(--accent) 10%, transparent),
+    transparent 58%
+  ),
+    radial-gradient(
+    900px 900px at 70% 114%,
+    color-mix(in srgb, var(--teal) 11%, transparent),
+    transparent 60%
+  ),
+    var(--bg);
+  background-attachment: fixed;
   color: var(--text);
-  font-family: "Helvetica Neue", Helvetica, system-ui, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI",
+    system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.5;
+  letter-spacing: -0.006em;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+}
+
+/* Ein sichtbarer Tastaturfokus, global und einmal. */
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand) 70%, transparent);
+  outline-offset: 2px;
 }
 
 button,
@@ -97,8 +193,8 @@ h1 {
 
 h2 {
   font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-weight: 650;
+  letter-spacing: -0.005em;
 }
 
 ::-webkit-scrollbar {
@@ -109,6 +205,7 @@ h2 {
 ::-webkit-scrollbar-thumb {
   background: var(--border-strong);
   border: 3px solid transparent;
+  border-radius: var(--r-pill);
   background-clip: content-box;
 }
 
@@ -119,16 +216,22 @@ h2 {
 
 /* ------------------------------------------------------------------ atoms */
 
+/* Der Rahmen sitzt als `inset`-Schatten **innen**: Ein echter `border` liegt
+   außerhalb des Radius und ragt an runden Ecken als Zacke heraus. Die dritte
+   Lage ist das Kantenlicht oben — sie macht aus der Fläche eine Scheibe. */
 .card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e2), inset 0 0 0 1px var(--border), inset 0 1px 0 var(--glass-line);
   padding: 16px;
   min-width: 0;
 }
 
 .card.tight {
   padding: 12px 14px;
+  border-radius: var(--r);
 }
 
 .card-head {
@@ -140,7 +243,7 @@ h2 {
 }
 
 .card-head h2 {
-  text-transform: uppercase;
+  font-size: 14px;
 }
 
 .card-head .spacer {
@@ -184,53 +287,75 @@ h2 {
   }
 }
 
+/* Knöpfe sind Glaspillen, die beim Überfahren einen Millimeter steigen und beim
+   Drücken zurückkommen. Der Rahmen ist wieder ein `inset`, damit die runde Form
+   nicht aufreißt. */
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: var(--panel);
-  border: 1px solid var(--border-strong);
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 0;
+  border-radius: var(--r-pill);
+  box-shadow: var(--e1), inset 0 0 0 1px var(--border-strong);
   color: var(--text-soft);
   cursor: pointer;
   white-space: nowrap;
-  transition: all 140ms ease;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, color 140ms ease;
 }
 
 .btn:hover {
-  background: var(--panel-2);
+  background: var(--glass-strong);
   color: var(--text);
-  border-color: var(--muted);
+  box-shadow: var(--e2), inset 0 0 0 1px var(--border-strong);
+  transform: translateY(-1px);
 }
 
+.btn:active {
+  transform: translateY(0);
+  box-shadow: var(--e1), inset 0 0 0 1px var(--border-strong);
+}
+
+/* Der Hauptknopf bleibt beim Überfahren gefüllt und wird **heller**. Vorher
+   klappte er auf weiß mit blauem Text um — dabei sah die wichtigste Aktion im
+   Moment der Berührung schwächer aus als im Ruhezustand. */
 .btn.primary {
   background: var(--brand);
-  border-color: var(--brand);
   color: #fff;
   font-weight: 600;
+  box-shadow: var(--glow-brand), inset 0 0 0 1px color-mix(in srgb, var(--brand-deep) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .btn.primary:hover {
-  background: var(--panel);
-  color: var(--brand);
-  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 88%, white);
+  color: #fff;
+  box-shadow: var(--e2), var(--glow-brand),
+    inset 0 0 0 1px color-mix(in srgb, var(--brand-deep) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .btn.ghost {
   background: none;
-  border-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
   color: var(--muted);
 }
 
 .btn.ghost:hover {
-  background: var(--panel-2);
+  background: var(--glass-soft);
+  box-shadow: none;
   color: var(--text);
 }
 
 .btn.danger:hover {
   background: var(--red);
-  border-color: var(--red);
   color: #fff;
+  box-shadow: var(--e2), inset 0 0 0 1px color-mix(in srgb, var(--red) 70%, transparent);
 }
 
 .btn.icon {
@@ -240,9 +365,10 @@ h2 {
 .btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-  background: var(--panel);
+  transform: none;
+  background: var(--glass-soft);
   color: var(--muted);
-  border-color: var(--border);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 .input,
@@ -251,17 +377,18 @@ h2 {
   width: 100%;
   min-width: 0;
   padding: 7px 10px;
-  background: var(--panel);
-  border: 1px solid var(--border-strong);
+  background: var(--glass-strong);
+  border: 0;
+  border-radius: var(--r-sm);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
   outline: none;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition: box-shadow 120ms ease;
 }
 
 .input:focus,
 .textarea:focus,
 .select:focus {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 2px var(--brand-soft);
+  box-shadow: inset 0 0 0 1px var(--brand), var(--ring);
 }
 
 .input::placeholder {
@@ -271,6 +398,7 @@ h2 {
 .textarea {
   resize: vertical;
   min-height: 64px;
+  border-radius: var(--r);
 }
 
 .field {
@@ -291,17 +419,19 @@ h2 {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 1px 6px;
+  padding: 1px 7px;
   font-size: 11px;
-  line-height: 1.35;
-  border: 1px solid var(--border);
-  background: var(--panel-2);
+  line-height: 1.4;
+  border: 0;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1px var(--border);
+  background: var(--glass-soft);
   color: var(--text-soft);
   white-space: nowrap;
 }
 
 .badge.p1 {
-  border-color: color-mix(in srgb, var(--red) 40%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--red) 40%, transparent);
   background: color-mix(in srgb, var(--red) 12%, transparent);
   color: var(--red);
 }
@@ -311,13 +441,13 @@ h2 {
 }
 
 .badge.due-past {
-  border-color: color-mix(in srgb, var(--red) 40%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--red) 40%, transparent);
   background: color-mix(in srgb, var(--red) 12%, transparent);
   color: var(--red);
 }
 
 .badge.due-today {
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
   background: var(--accent-soft);
   color: var(--accent);
 }
@@ -325,6 +455,7 @@ h2 {
 .dot {
   width: 7px;
   height: 7px;
+  border-radius: var(--r-pill);
   flex: none;
 }
 
@@ -379,7 +510,8 @@ h2 {
 
 .progress {
   height: 6px;
-  background: var(--panel-3);
+  background: var(--well);
+  border-radius: var(--r-pill);
   overflow: hidden;
 }
 
@@ -387,6 +519,7 @@ h2 {
   display: block;
   height: 100%;
   background: var(--brand);
+  border-radius: var(--r-pill);
   transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -426,6 +559,7 @@ h2 {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
+  font-weight: 600;
 }
 
 /* ------------------------------------------------------------------ modal */
@@ -433,8 +567,9 @@ h2 {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(9, 12, 15, 0.45);
-  backdrop-filter: blur(2px);
+  background: rgba(9, 12, 20, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: grid;
   place-items: start center;
   padding-top: 12vh;
@@ -443,16 +578,19 @@ h2 {
 
 .modal {
   width: min(560px, calc(100vw - 48px));
-  background: var(--panel);
-  border: 1px solid var(--border-strong);
-  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.5);
-  animation: pop 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  background: var(--glass-strong);
+  backdrop-filter: var(--blur-lg);
+  -webkit-backdrop-filter: var(--blur-lg);
+  border-radius: var(--r-xl);
+  box-shadow: var(--e4), inset 0 0 0 1px var(--border-strong), inset 0 1px 0 var(--glass-line);
+  animation: pop 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
 }
 
 @keyframes pop {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-10px) scale(0.97);
   }
 }
 
@@ -460,16 +598,16 @@ h2 {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
+  padding: 13px 18px;
+  box-shadow: inset 0 -1px 0 var(--border);
 }
 
 .modal-head h2 {
-  text-transform: uppercase;
+  font-size: 14px;
 }
 
 .modal-body {
-  padding: 16px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -479,8 +617,8 @@ h2 {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--border);
+  padding: 13px 18px;
+  box-shadow: inset 0 1px 0 var(--border);
 }
 
 .two-col {
@@ -489,35 +627,44 @@ h2 {
   gap: 12px;
 }
 
+/* Rinne und Reiter: Der Umschalter ist eine vertiefte Fläche, der aktive
+   Eintrag eine gehobene Pille darin. Die Trennstriche zwischen den Knöpfen sind
+   damit überflüssig — der Höhenunterschied sagt dasselbe ruhiger. */
 .seg {
   display: flex;
-  border: 1px solid var(--border-strong);
+  gap: 2px;
+  padding: 2px;
+  background: var(--well);
+  border-radius: var(--r-sm);
+  box-shadow: inset 0 0 0 1px var(--border);
   min-width: 0;
 }
 
 .seg button {
   flex: 1 1 0;
   min-width: 0;
-  padding: 6px 8px;
+  padding: 5px 9px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: var(--panel);
+  background: none;
   border: none;
-  border-right: 1px solid var(--border);
+  border-radius: calc(var(--r-sm) - 3px);
   cursor: pointer;
   color: var(--muted);
   font-size: 12px;
+  transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease;
 }
 
-.seg button:last-child {
-  border-right: none;
+.seg button:hover {
+  color: var(--text);
 }
 
 .seg button.on {
-  background: var(--brand-soft);
+  background: var(--panel);
   color: var(--brand);
-  font-weight: 700;
+  font-weight: 650;
+  box-shadow: var(--e1);
 }
 
 .toast {
@@ -527,19 +674,21 @@ h2 {
   transform: translateX(-50%);
   background: var(--text);
   color: var(--panel);
-  padding: 8px 14px;
+  padding: 9px 15px;
+  border-radius: var(--r-pill);
   font-size: 12px;
   z-index: 200;
-  box-shadow: var(--shadow-hover);
-  animation: pop 160ms ease;
+  box-shadow: var(--e3);
+  animation: pop 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .kbd {
-  border: 1px solid var(--border-strong);
-  padding: 0 4px;
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  box-shadow: inset 0 0 0 1px var(--border-strong), 0 1px 0 var(--border);
   font-size: 10px;
   color: var(--muted);
-  background: var(--panel-2);
+  background: var(--glass-soft);
 }
 
 .spin {
@@ -552,26 +701,30 @@ h2 {
   }
 }
 
+/* Deckendes `--panel`, nicht Glas: Hinter dem Häkchen darf nichts durchscheinen,
+   sonst verschwindet die Form über buntem Grund. */
 .check {
   flex: none;
   width: 17px;
   height: 17px;
-  border: 1.5px solid var(--border-strong);
+  border: 0;
+  border-radius: var(--r-xs);
+  box-shadow: inset 0 0 0 1.5px var(--border-strong);
   background: var(--panel);
   display: grid;
   place-items: center;
   cursor: pointer;
   color: transparent;
-  transition: all 140ms ease;
+  transition: background 140ms ease, box-shadow 140ms ease, color 140ms ease;
 }
 
 .check:hover {
-  border-color: var(--brand);
+  box-shadow: inset 0 0 0 1.5px var(--brand);
 }
 
 .check.on {
   background: var(--green);
-  border-color: var(--green);
+  box-shadow: inset 0 0 0 1.5px var(--green), var(--e1);
   color: #fff;
 }
 
@@ -607,6 +760,11 @@ h2 {
   color: #fff;
 }
 
+/* Ein Toast mit Fehlertext ist keine Pille mehr, sondern ein Block. */
+.toasts .toast:has(.toast-detail) {
+  border-radius: var(--r);
+}
+
 .toast-detail {
   margin: 6px 0 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -615,27 +773,35 @@ h2 {
   max-height: 120px;
   overflow: auto;
   opacity: .85;
+  border-radius: var(--r-xs);
 }
 
 /* ── Ablegefläche für Dateien ─────────────────────────────────────────────── */
+/* Gestrichelt bleibt gestrichelt — ein echter `border` ist hier richtig, weil
+   das Strichmuster die Fläche als „hier ablegen" kennzeichnet und ein
+   `inset`-Schatten keine Striche kann. */
 .dropzone {
   display: grid;
   justify-items: center;
   gap: 4px;
   padding: 22px 16px;
-  border: 1px dashed var(--border);
-  background: var(--panel-2);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--well);
   color: var(--muted);
   cursor: pointer;
-  transition: border-color 120ms ease, background 120ms ease;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
 }
 
 .dropzone:hover {
   border-color: var(--brand);
+  background: var(--brand-soft);
 }
 .dropzone.over {
   border-color: var(--brand);
-  background: var(--panel-3);
+  border-style: solid;
+  background: var(--brand-soft);
+  box-shadow: var(--glow-brand);
   color: var(--text);
 }
 .dropzone.busy {
@@ -653,7 +819,8 @@ h2 {
 .table-wrap {
   overflow: auto;
   max-height: 320px;
-  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 .table {
@@ -673,7 +840,7 @@ h2 {
 .table th {
   position: sticky;
   top: 0;
-  background: var(--panel-3);
+  background: var(--panel-2);
   font-weight: 600;
   font-size: 11px;
   letter-spacing: .04em;
@@ -682,7 +849,7 @@ h2 {
 }
 
 .table tbody tr:hover {
-  background: var(--panel-2);
+  background: var(--glass-soft);
 }
 
 /* ── Jobs ─────────────────────────────────────────────────────────────────── */
@@ -720,9 +887,10 @@ h2 {
 /* ── Protokoll- und Fehlertexte ───────────────────────────────────────────── */
 .log {
   margin: 0;
-  padding: 8px 10px;
-  background: var(--panel-3);
-  border: 1px solid var(--border);
+  padding: 9px 11px;
+  background: var(--well);
+  border-radius: var(--r-sm);
+  box-shadow: inset 0 0 0 1px var(--border);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 11px;
   line-height: 1.5;
@@ -772,11 +940,14 @@ h2 {
    Content-Element, das Aussehen vollständig von hier. */
 .menu {
   min-width: 180px;
-  padding: 4px;
-  background: var(--panel);
-  border: 1px solid var(--border-strong);
-  box-shadow: var(--shadow-hover);
+  padding: 5px;
+  background: var(--glass-strong);
+  backdrop-filter: var(--blur-lg);
+  -webkit-backdrop-filter: var(--blur-lg);
+  border-radius: var(--r);
+  box-shadow: var(--e3), inset 0 0 0 1px var(--border-strong), inset 0 1px 0 var(--glass-line);
   z-index: 120;
+  animation: pop 140ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .menu-item {
@@ -784,7 +955,8 @@ h2 {
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 6px 8px;
+  padding: 6px 9px;
+  border-radius: var(--r-xs);
   font-size: 12px;
   color: var(--text);
   cursor: pointer;
@@ -829,7 +1001,7 @@ h2 {
 
 .menu-sep {
   height: 1px;
-  margin: 4px 0;
+  margin: 5px 0;
   background: var(--border);
 }
 
@@ -902,7 +1074,7 @@ h2 {
    auf dem ganzen `thead` sitzt. */
 .table.grid-table thead .filter-row th {
   padding: 4px 6px;
-  background: var(--panel-2);
+  background: var(--panel-3);
   text-transform: none;
   letter-spacing: normal;
   vertical-align: top;
@@ -932,10 +1104,10 @@ h2 {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 8px;
-  border: 1px solid var(--border);
-  border-bottom: none;
-  background: var(--panel-2);
+  padding: 6px 9px;
+  border-radius: var(--r) var(--r) 0 0;
+  box-shadow: inset 0 0 0 1px var(--border);
+  background: var(--well);
 }
 
 .pager {
@@ -962,7 +1134,7 @@ h2 {
 
 .pager-pages .btn.on {
   background: var(--brand-soft);
-  border-color: var(--brand);
+  box-shadow: var(--e1), inset 0 0 0 1px var(--brand);
   color: var(--brand);
 }
 
@@ -998,7 +1170,10 @@ h2 {
      Zeilenenden) lag außerhalb. `minmax(0, …)` nimmt diese Untergrenze weg. */
   grid-template-columns: minmax(0, 1fr);
   overflow: hidden;
-  background: var(--bg);
+  /* **Kein** eigener Hintergrund: Der Verlauf liegt auf dem `body` und muss
+     durch die ganze Schale hindurch sichtbar bleiben. Ein `var(--bg)` hier
+     deckte ihn vollständig ab, und alles Glas darüber wurde zu blassem Grau. */
+  background: none;
 }
 
 .body {
@@ -1016,8 +1191,10 @@ h2 {
   gap: 10px;
   min-width: 0;
   padding: 8px 12px 8px 90px; /* links Platz für die Fensterknöpfe von macOS */
-  border-bottom: 1px solid var(--border);
-  background: var(--panel);
+  box-shadow: inset 0 -1px 0 var(--border);
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
   /* Bei `transparentTitlebar` ist die Kopfzeile der Griff, an dem das Fenster
      hängt — interaktive Elemente darin müssen ausgenommen werden. */
   -webkit-app-region: drag;
@@ -1071,11 +1248,13 @@ h2 {
 .topbar-path:hover {
   color: var(--brand);
   text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--brand) 45%, transparent);
+  text-underline-offset: 2px;
 }
 
 .badge.warn {
   background: var(--accent-soft);
-  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent);
   color: var(--accent);
 }
 
@@ -1099,16 +1278,20 @@ h2 {
   flex-direction: column;
   min-height: 0;
   background: var(--sidebar);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
   font-size: 12.5px;
 }
 
+/* Die Trennkante als `inset`: ein echter `border` würde bei einer Leiste, die
+   per Medienabfrage verschwindet, als letzte Linie stehen bleiben. */
 .side.history {
-  border-right: 1px solid var(--border);
+  box-shadow: inset -1px 0 0 var(--border);
 }
 
 .side.toc {
   flex-basis: 230px;
-  border-left: 1px solid var(--border);
+  box-shadow: inset 1px 0 0 var(--border);
 }
 
 .side-head {
@@ -1121,6 +1304,7 @@ h2 {
 
 .side-head strong {
   font-size: 11px;
+  font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -1136,7 +1320,8 @@ h2 {
   flex: 1;
   min-width: 0;
   height: 28px;
-  padding: 0 8px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
   font-size: 12.5px;
 }
 
@@ -1160,30 +1345,31 @@ h2 {
 }
 
 .side-foot {
-  border-top: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 var(--border);
   padding: 6px;
 }
 
 .tiny-btn {
   font-size: 11.5px;
   height: 26px;
-  padding: 0 8px;
+  padding: 0 10px;
 }
 
 /* Eintrag im Verlauf: Titel + Herkunft, Aktionen erst beim Überfahren. */
 .side-item {
   display: flex;
   align-items: stretch;
-  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  transition: background 120ms ease, box-shadow 120ms ease;
 }
 
 .side-item:hover {
-  background: var(--panel-2);
+  background: var(--glass-soft);
 }
 
 .side-item.active {
   background: var(--brand-soft);
-  border-color: var(--brand);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 45%, transparent);
 }
 
 .side-item.missing .side-item-title {
@@ -1197,15 +1383,16 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding: 6px 8px;
+  padding: 6px 9px;
   background: none;
   border: 0;
+  border-radius: inherit;
   text-align: left;
   cursor: pointer;
 }
 
 .side-item-title {
-  font-weight: 550;
+  font-weight: 560;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1281,8 +1468,9 @@ h2 {
 }
 
 .tree-list:focus-visible {
-  outline: 2px solid var(--brand);
+  outline: 2px solid color-mix(in srgb, var(--brand) 70%, transparent);
   outline-offset: -2px;
+  border-radius: var(--r-sm);
 }
 
 /* Eine Zeile im Baum. Die Einrückung kommt aus `--depth` (in `Tree.tsx`
@@ -1292,28 +1480,37 @@ h2 {
   align-items: center;
   gap: 5px;
   width: 100%;
-  padding: 3px 6px 3px calc(4px + var(--depth, 0) * 12px);
+  padding: 4px 7px 4px calc(5px + var(--depth, 0) * 12px);
   background: none;
-  border: 1px solid transparent;
+  border: 0;
+  border-radius: var(--r-sm);
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
+  transition: background 120ms ease, box-shadow 120ms ease;
 }
 
 .tree-row:hover {
-  background: var(--panel-2);
+  background: var(--glass-soft);
 }
 
 /* Der Tastaturzeiger ist nicht dasselbe wie das offene Dokument: Man läuft mit
    den Pfeiltasten durch den Baum, ohne dabei etwas zu öffnen. */
 .tree-row.cursor {
-  border-color: var(--border-strong);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
 }
 
 .tree-row.active {
   background: var(--brand-soft);
-  border-color: var(--brand);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 45%, transparent);
+  font-weight: 560;
+}
+
+/* Zeiger **und** offenes Dokument: Der Rahmen des Zeigers gewinnt, sonst
+   verschwindet er, sobald man mit den Pfeiltasten auf der offenen Datei steht. */
+.tree-row.active.cursor {
+  box-shadow: inset 0 0 0 1px var(--brand);
 }
 
 .tree-twist {
@@ -1350,6 +1547,7 @@ h2 {
   justify-content: space-between;
   gap: 6px;
   padding: 6px 10px;
+  box-shadow: inset 0 1px 0 var(--border);
 }
 
 .warn-text {
@@ -1366,7 +1564,10 @@ h2 {
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
-  padding: 16px 12px;
+  margin: 8px 6px;
+  padding: 16px 14px;
+  border-radius: var(--r);
+  background: var(--well);
 }
 
 /* Inhaltsverzeichnis */
@@ -1376,26 +1577,42 @@ h2 {
   gap: 1px;
 }
 
+/* `flex: none` ist hier Pflicht, kein Feinschliff: Das Element trägt **beide**
+   Klassen, `.side-list` (`flex: 1 1 0` + `overflow-y: auto`) und `.toc-list`
+   (Spalten-Flex). Es ist damit ein Flex-Container mit *fester* Höhe, und die
+   Einträge darin schrumpfen mit ihrem Standard-`flex-shrink: 1` so lange, bis
+   sie alle hineinpassen — bei einem langen Verzeichnis auf 17 statt 27 px, was
+   jeden Unterlänge abschneidet (`overflow: hidden` für das Kürzen am Ende).
+   Gescrollt wurde nie, weil nichts überlief. */
+.toc-item {
+  flex: none;
+}
+
+/* Der Marker links ist ein `inset`-Schatten, nicht ein `border-left`: Als
+   echter Rahmen saß er außerhalb des Radius und stand als loser Strich neben
+   der abgerundeten Zeile. */
 .toc-item {
   background: none;
   border: 0;
-  border-left: 2px solid transparent;
+  border-radius: var(--r-sm);
   text-align: left;
-  padding: 4px 8px;
+  padding: 4px 9px;
   cursor: pointer;
   color: var(--text-soft);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease;
 }
 
 .toc-item:hover {
   color: var(--text);
-  background: var(--panel-2);
+  background: var(--glass-soft);
 }
 
 .toc-item.active {
-  border-left-color: var(--brand);
+  background: var(--brand-soft);
+  box-shadow: inset 2px 0 0 var(--brand);
   color: var(--brand);
   font-weight: 600;
 }
@@ -1411,15 +1628,23 @@ h2 {
 }
 
 /* Lesebreite: Zeilenlänge ist der wichtigste Hebel für Lesbarkeit. „weit"
-   nutzt das ganze Fenster — für breite Tabellen und große Diagramme. */
+   nutzt das ganze Fenster — für breite Tabellen und große Diagramme.
+
+   Das Blatt ist **deckend** (`--panel`) und trägt Radius und Tiefe: ein Bogen
+   Papier, der über dem Verlauf liegt. Bewusst kein Glas — ein langer Fließtext
+   über einer verwischten Fläche liest sich messbar schlechter, und das ist der
+   einzige Zweck dieser Spalte. Der Effekt gehört an die Anwendung ringsherum. */
 .doc {
   --doc-width: 60em;
   /* Die Lesebreite in `em` statt Pixeln: Sie soll der Schriftgröße folgen.
      Wer über ⌘+ vergrößert, will längere Zeilen sehen, nicht dieselbe
      Pixelbreite mit halb so vielen Wörtern darin. */
   max-width: min(var(--doc-width), 100%);
-  margin: 0 auto;
-  padding: 28px 32px 120px;
+  margin: 22px auto 90px;
+  padding: 34px 40px 56px;
+  background: var(--panel);
+  border-radius: var(--r-xl);
+  box-shadow: var(--e2), inset 0 0 0 1px var(--border);
   font-size: calc(15px * var(--doc-scale, 1));
   line-height: 1.65;
 }
@@ -1428,8 +1653,15 @@ h2 {
   --doc-width: 46em;
 }
 
+/* „Weit" heißt randlos: Bei voller Fensterbreite wäre ein Blatt mit Radien und
+   Rand nur noch ein Kasten um das Fenster herum. Dann zählt die Fläche, nicht
+   die Metapher. */
 .reading-weit .doc {
   --doc-width: 100%;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 28px 32px 120px;
 }
 
 .doc-empty {
@@ -1445,8 +1677,9 @@ h2 {
 }
 
 .doc-empty h2 {
-  font-size: 16px;
+  font-size: 17px;
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .shortcut-hint {
@@ -1464,11 +1697,12 @@ h2 {
 .frontmatter {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
-  gap: 2px 14px;
-  margin-bottom: 24px;
-  padding: 10px 12px;
-  background: var(--panel-2);
-  border-left: 2px solid var(--border-strong);
+  gap: 3px 14px;
+  margin-bottom: 26px;
+  padding: 12px 14px;
+  background: var(--well);
+  border-radius: var(--r);
+  box-shadow: inset 2px 0 0 var(--border-strong);
   font-size: 12px;
 }
 
@@ -1513,18 +1747,24 @@ h2 {
   scroll-margin-top: 16px;
 }
 
+/* Die Linie unter H1/H2 bleibt — in einem Dokument ordnet sie die Hierarchie,
+   anders als in der Anwendung, wo Trennstriche durch Tiefe ersetzt wurden. Sie
+   wird nur leiser und läuft rechts aus, statt hart an der Spaltenkante zu
+   enden. */
 .markdown h1 {
   font-size: 1.9em;
-  padding-bottom: 0.25em;
-  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(to right, var(--border-strong), transparent) 1;
 }
 
 .markdown h2 {
   font-size: 1.45em;
   text-transform: none;
   letter-spacing: -0.01em;
-  padding-bottom: 0.2em;
-  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.22em;
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(to right, var(--border), transparent) 1;
 }
 
 .markdown h3 {
@@ -1604,8 +1844,10 @@ h2 {
 }
 
 .markdown blockquote {
-  padding: 0.2em 0 0.2em 1em;
-  border-left: 3px solid var(--border-strong);
+  padding: 0.6em 1em;
+  border-radius: var(--r);
+  background: var(--well);
+  box-shadow: inset 3px 0 0 var(--brand);
   color: var(--text-soft);
 }
 
@@ -1615,8 +1857,9 @@ h2 {
 
 .markdown hr {
   border: 0;
-  border-top: 1px solid var(--border);
-  margin: 2em 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border-strong), transparent);
+  margin: 2.4em 0;
 }
 
 .markdown img,
@@ -1624,26 +1867,52 @@ h2 {
   max-width: 100%;
   height: auto;
   display: block;
-  margin: 0.5em 0;
+  margin: 0.6em 0;
+  border-radius: var(--r);
+  /* Deckendes Panel, kein Glas: Solange das Bild lädt, ist diese Fläche das
+     Bild — durchsichtig wäre sie ein Loch im Blatt. */
   background: var(--panel-2);
 }
 
 /* Breite Tabellen scrollen in sich selbst, nicht die Seite. */
+/* `border-collapse: separate` mit `border-spacing: 0`, damit der Radius am
+   Rahmen der Tabelle überhaupt greifen kann: Bei `collapse` teilen sich die
+   Zellen die Kanten, und die Ecken bleiben eckig. Die Zellenlinien sind
+   deshalb einseitig (rechts/unten) statt vierseitig. */
 .markdown table {
   display: block;
   overflow-x: auto;
   width: max-content;
   max-width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: var(--r);
+  box-shadow: inset 0 0 0 1px var(--border);
   font-size: 0.92em;
 }
 
 .markdown th,
 .markdown td {
-  border: 1px solid var(--border);
-  padding: 6px 10px;
+  border: 0;
+  box-shadow: inset -1px -1px 0 var(--border);
+  padding: 7px 11px;
   text-align: left;
   vertical-align: top;
+}
+
+/* Die letzte Spalte braucht rechts keine Linie — dort sitzt schon der Rahmen
+   der Tabelle, und zwei Linien auf einem Pixel werden dicker als die anderen. */
+.markdown th:last-child,
+.markdown td:last-child {
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+
+.markdown tbody tr:last-child td {
+  box-shadow: inset -1px 0 0 var(--border);
+}
+
+.markdown tbody tr:last-child td:last-child {
+  box-shadow: none;
 }
 
 .markdown thead th {
@@ -1659,17 +1928,22 @@ h2 {
 .markdown code {
   font-family: "SF Mono", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
   font-size: 0.88em;
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  padding: 0.08em 0.35em;
+  background: var(--well);
+  border-radius: var(--r-xs);
+  box-shadow: inset 0 0 0 1px var(--border);
+  padding: 0.1em 0.38em;
 }
 
-/* Codeblock: eigene Umrandung, Sprache oben rechts, Kopieren beim Überfahren. */
+/* Codeblock: vertiefte Wanne im Blatt, Sprache oben rechts, Kopieren beim
+   Überfahren. `overflow: hidden` hält den scrollenden `pre` innerhalb der
+   runden Ecken — ohne das schiebt sich der Code an den Ecken darüber hinaus. */
 .code-block {
   position: relative;
-  margin: 0 0 1.2em;
-  border: 1px solid var(--border);
-  background: var(--panel-2);
+  margin: 0 0 1.3em;
+  border-radius: var(--r);
+  box-shadow: inset 0 0 0 1px var(--border);
+  background: var(--well);
+  overflow: hidden;
 }
 
 .code-block::before {
@@ -1677,8 +1951,10 @@ h2 {
   position: absolute;
   top: 0;
   right: 0;
-  padding: 2px 8px;
+  padding: 3px 10px;
+  border-bottom-left-radius: var(--r-sm);
   font-size: 10px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
@@ -1700,16 +1976,20 @@ h2 {
 
 .code-copy {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 7px;
+  right: 7px;
   opacity: 0;
-  background: var(--panel);
-  border: 1px solid var(--border-strong);
+  background: var(--glass-strong);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 0;
+  border-radius: var(--r-pill);
+  box-shadow: var(--e1), inset 0 0 0 1px var(--border-strong);
   color: var(--text-soft);
   font-size: 11px;
-  padding: 2px 8px;
+  padding: 3px 10px;
   cursor: pointer;
-  transition: opacity 0.12s;
+  transition: opacity 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .code-block:hover .code-copy {
@@ -1717,15 +1997,22 @@ h2 {
 }
 
 .code-copy:hover {
-  border-color: var(--brand);
+  box-shadow: var(--e1), inset 0 0 0 1px var(--brand);
   color: var(--brand);
+}
+
+/* Der Knopf muss auch mit der Tastatur erreichbar sein — sonst ist „Kopieren"
+   ausschließlich mit der Maus zu bedienen. */
+.code-copy:focus-visible {
+  opacity: 1;
 }
 
 /* Fußnoten (marked-footnote) */
 .markdown .footnotes {
   margin-top: 2.5em;
-  padding-top: 1em;
-  border-top: 1px solid var(--border);
+  padding-top: 1.2em;
+  border-top: 1px solid transparent;
+  border-image: linear-gradient(to right, var(--border-strong), transparent) 1;
   font-size: 0.9em;
   color: var(--text-soft);
 }
@@ -1734,9 +2021,10 @@ h2 {
 .diagram {
   display: flex;
   justify-content: center;
-  padding: 12px;
-  border: 1px solid var(--border);
-  background: var(--panel);
+  padding: 16px;
+  border-radius: var(--r);
+  box-shadow: inset 0 0 0 1px var(--border);
+  background: var(--panel-2);
   overflow-x: auto;
 }
 
@@ -1747,7 +2035,7 @@ h2 {
 
 .diagram.failed {
   display: block;
-  border-color: var(--red);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--red) 55%, transparent);
 }
 
 .diagram-error {
@@ -1772,15 +2060,17 @@ h2 {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  padding: 7px 10px;
+  background: var(--glass-strong);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  box-shadow: var(--e2), inset 0 -1px 0 var(--border);
 }
 
 .findbar .input {
   flex: 1;
   height: 28px;
+  border-radius: var(--r-pill);
 }
 
 .find-count {
@@ -1801,6 +2091,10 @@ h2 {
   background-color: var(--find-now);
   color: var(--find-now-text);
 }
+
+/* Kein Radius auf den Treffern: Die Custom-Highlight-API nimmt nur Farbe,
+   Hintergrund, Unterstreichung und Textschatten an — `border-radius` würde hier
+   stillschweigend verworfen. Die Markierung bleibt deshalb rechteckig. */
 
 /* ---------------------------------------------------------------- Kleinkram */
 
@@ -1832,6 +2126,13 @@ h2 {
   }
 
   .doc {
+    margin: 14px auto 70px;
+    padding: 26px 24px 44px;
+    border-radius: var(--r-lg);
+  }
+
+  .reading-weit .doc {
+    margin: 0;
     padding: 22px 22px 100px;
   }
 }
@@ -1871,10 +2172,31 @@ h2 {
     background: #fff;
   }
 
+  /* Auf Papier ist das Blatt das Papier: kein Radius, keine Tiefe, kein Rand
+     und kein Verlauf — sonst druckt der Drucker die Metapher mit. */
   .doc {
     max-width: none;
+    margin: 0;
     padding: 0;
+    background: none;
+    border-radius: 0;
+    box-shadow: none;
     color: #000;
+  }
+
+  .code-block,
+  .diagram,
+  .markdown blockquote,
+  .markdown table {
+    background: none;
+    box-shadow: none;
+    border: 1px solid #bbb;
+  }
+
+  .markdown th,
+  .markdown td {
+    box-shadow: none;
+    border: 1px solid #bbb;
   }
 
   .markdown a {
