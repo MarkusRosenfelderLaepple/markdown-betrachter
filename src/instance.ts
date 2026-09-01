@@ -17,6 +17,7 @@
  * kann es nicht.
  */
 import { join } from "@std/path";
+import type { StartupTarget } from "./startup.ts";
 import { dataDir } from "./paths.ts";
 import { log } from "./log.ts";
 
@@ -50,17 +51,17 @@ function readLock(): LockFile | null {
  * Gibt `true` zurück, wenn bereits eine Instanz läuft und deren Fenster
  * geweckt wurde — der Aufrufer beendet sich dann sofort.
  */
-export async function focusRunningInstance(openPath?: string | null): Promise<boolean> {
+export async function focusRunningInstance(target?: StartupTarget | null): Promise<boolean> {
   const lock = readLock();
   if (!lock) return false;
   try {
     const response = await fetch(`http://127.0.0.1:${lock.port}${FOCUS_PATH}`, {
       method: "POST",
-      // Der Zweitstart reicht die Datei mit, mit der er aufgerufen wurde
-      // („Öffnen mit …", während die App schon läuft) — die laufende Instanz
-      // zeigt sie an, statt dass ein zweites Fenster aufginge.
+      // Der Zweitstart reicht mit, womit er aufgerufen wurde („Öffnen mit …",
+      // während die App schon läuft) — die laufende Instanz zeigt die Datei an
+      // bzw. übernimmt den Ordner, statt dass ein zweites Fenster aufginge.
       headers: { [FOCUS_HEADER]: lock.secret, "content-type": "application/json" },
-      body: JSON.stringify({ path: openPath ?? null }),
+      body: JSON.stringify({ path: target?.path ?? null, kind: target?.kind ?? null }),
       signal: AbortSignal.timeout(1500),
     });
     // Body immer abholen, sonst bleibt die Verbindung offen und der Prozess

@@ -115,14 +115,26 @@ Deno.test("Einstellungen: gültiger Wert wird gespeichert, ungültiger abgelehnt
 });
 
 Deno.test("Startpfad wird genau einmal ausgeliefert", async () => {
-  const { app: withStartup } = createApp({ requestLog: false, startupPath: "/tmp/start.md" });
+  const { app: withStartup } = createApp({
+    requestLog: false,
+    startupTarget: { path: "/tmp/start.md", kind: "file" },
+  });
   const first = await withStartup.request("/api/startup/claim", { method: "POST" });
-  assertEquals((await first.json()).path, "/tmp/start.md");
+  assertEquals(await first.json(), { path: "/tmp/start.md", kind: "file" });
 
   // Zweiter Aufruf ist leer — sonst springt die Ansicht bei jedem Neuladen
   // zurück auf die Startdatei.
   const second = await withStartup.request("/api/startup/claim", { method: "POST" });
   assertEquals((await second.json()).path, null);
+});
+
+Deno.test("Ordner als Startargument kommt als Arbeitsordner an", async () => {
+  const { app } = createApp({
+    requestLog: false,
+    startupTarget: { path: "/tmp/projekt", kind: "dir" },
+  });
+  const response = await app.request("/api/startup/claim", { method: "POST" });
+  assertEquals(await response.json(), { path: "/tmp/projekt", kind: "dir" });
 });
 
 Deno.test("Externe Links: nur Web-Protokolle gehen nach draußen", async () => {

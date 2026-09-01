@@ -69,6 +69,14 @@ const MENU: MenuItem[] = [
       label: "Datei",
       items: [
         { item: { label: "Öffnen …", id: "open", accelerator: "CmdOrCtrl+O", enabled: true } },
+        {
+          item: {
+            label: "Ordner öffnen …",
+            id: "open-folder",
+            accelerator: "CmdOrCtrl+Shift+O",
+            enabled: true,
+          },
+        },
         { item: { label: "Neu laden", id: "refresh", accelerator: "CmdOrCtrl+R", enabled: true } },
         "separator",
         { item: { label: "Im Finder zeigen", id: "reveal", accelerator: "CmdOrCtrl+Alt+R", enabled: true } },
@@ -107,7 +115,7 @@ const MENU: MenuItem[] = [
       items: [
         {
           item: {
-            label: "Verlauf ein-/ausblenden",
+            label: "Seitenleiste ein-/ausblenden",
             id: "toggle-history",
             accelerator: "CmdOrCtrl+1",
             enabled: true,
@@ -118,6 +126,14 @@ const MENU: MenuItem[] = [
             label: "Inhaltsverzeichnis ein-/ausblenden",
             id: "toggle-toc",
             accelerator: "CmdOrCtrl+2",
+            enabled: true,
+          },
+        },
+        {
+          item: {
+            label: "Verlauf / Ordner umschalten",
+            id: "toggle-sidebar-mode",
+            accelerator: "CmdOrCtrl+3",
             enabled: true,
           },
         },

@@ -100,17 +100,20 @@ Abschnitt „UI-Hinweise".
 Diese Klassen stehen in `ui/src/styles.css` und gehören zu den Bausteinen aus Stufe 1 (siehe README-Kapitel zu
 Dateien, Jobs und Fehlerbehandlung):
 
-| Klasse                                | Wofür                                                                                                           |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `.toasts` + `.toast.success`/`.error` | Toast-Stapel unten mittig; verwaltet vom Store, nicht von Komponenten                                           |
-| `.toast-detail`                       | kopierbarer Fehlertext im Toast (monospace, scrollbar)                                                          |
-| `.dropzone`, `.over`, `.busy`         | Ablegefläche für Dateien inklusive Ziehen-Zustand                                                               |
-| `.table-wrap` + `.table`              | schlichte Datentabelle mit klebender Kopfzeile für Vorschauen                                                   |
-| `.jobs`, `.job`, `.job-state`         | Vorgangsliste mit Zustandsfarbe (grün/rot/amber/brand)                                                          |
-| `.log`                                | Protokoll- und Stacktrace-Blöcke                                                                                |
-| `.kv`                                 | Schlüssel-Wert-Liste („Über"-Block)                                                                             |
-| `.search`                             | Eingabefeld mit Lupe im Feld (Icon absolut, `padding-left` am Input)                                            |
-| `a.nav-item`                          | Navigationseinträge sind mit TanStack Router `<Link>`-Elemente (`<a>`) — Unterstreichung und Farbe zurücksetzen |
+| Klasse                                   | Wofür                                                                                                           |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `.toasts` + `.toast.success`/`.error`    | Toast-Stapel unten mittig; verwaltet vom Store, nicht von Komponenten                                           |
+| `.toast-detail`                          | kopierbarer Fehlertext im Toast (monospace, scrollbar)                                                          |
+| `.dropzone`, `.over`, `.busy`            | Ablegefläche für Dateien inklusive Ziehen-Zustand                                                               |
+| `.table-wrap` + `.table`                 | schlichte Datentabelle mit klebender Kopfzeile für Vorschauen                                                   |
+| `.jobs`, `.job`, `.job-state`            | Vorgangsliste mit Zustandsfarbe (grün/rot/amber/brand)                                                          |
+| `.log`                                   | Protokoll- und Stacktrace-Blöcke                                                                                |
+| `.kv`                                    | Schlüssel-Wert-Liste („Über"-Block)                                                                             |
+| `.search`                                | Eingabefeld mit Lupe im Feld (Icon absolut, `padding-left` am Input)                                            |
+| `.side-tabs`, `.side-body`               | Umschaltung Verlauf ↔ Ordner oben in der linken Leiste, Inhalt darunter                                         |
+| `.tree-row`, `.tree-name`, `.tree-twist` | Zeile des Ordnerbaums; die Einrückung hängt an der Variablen `--depth`, nicht an einer Klasse pro Ebene         |
+| `.side-empty-state`                      | Leerzustand einer Seitenleiste, bei dem der Knopf der Hauptinhalt ist                                           |
+| `a.nav-item`                             | Navigationseinträge sind mit TanStack Router `<Link>`-Elemente (`<a>`) — Unterstreichung und Farbe zurücksetzen |
 
 Neue Tabellenanforderungen (Sortieren, Spaltenwahl, Gruppieren) nicht in dieses CSS hineinschrauben, sondern
 `@tanstack/react-table` dazunehmen: kopflos, das CSS hier bleibt gültig.

@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   ArrowRight,
   FolderOpen,
+  FolderTree,
   List,
   Loader2,
   Moon,
@@ -27,11 +28,12 @@ import { infoQuery, settingsQuery } from "./query.ts";
 import { onMenuAction } from "./menu.ts";
 import { applyTheme, isDark, toast, ui, uiStore } from "./store/ui.ts";
 import { viewer, viewerStore } from "./store/viewer.ts";
+import { workspace } from "./store/workspace.ts";
 import type { Heading } from "./markdown.ts";
 import { fmt } from "./format.ts";
 import { AppErrorBoundary } from "./components/ErrorBoundary.tsx";
 import { Toaster } from "./components/Toaster.tsx";
-import { History } from "./components/History.tsx";
+import { Sidebar } from "./components/Sidebar.tsx";
 import { Toc } from "./components/Toc.tsx";
 import { FindBar } from "./components/FindBar.tsx";
 import { EmptyViewer, Viewer } from "./components/Viewer.tsx";
@@ -78,8 +80,14 @@ export function App() {
    * der die App einmal gestartet wurde.
    */
   const claimStartup = useCallback(async () => {
-    const { path } = await unwrap<{ path: string | null }>(client.api.startup.claim.$post());
-    if (path) await viewer.open(path);
+    const { path, kind } = await unwrap<{ path: string | null; kind: "file" | "dir" | null }>(
+      client.api.startup.claim.$post(),
+    );
+    if (!path) return;
+    // Ein Ordner als Startargument meint den Arbeitsordner, keine Datei — wer
+    // die App auf ein Projektverzeichnis zieht, will den Baum sehen.
+    if (kind === "dir") return workspace.set(path);
+    await viewer.open(path);
   }, []);
 
   useEffect(() => {
@@ -158,6 +166,8 @@ export function App() {
       switch (action) {
         case "open":
           return void viewer.pick();
+        case "open-folder":
+          return void workspace.pick();
         case "refresh":
           return void viewer.refresh();
         case "reveal":
@@ -172,6 +182,8 @@ export function App() {
           return ui.toggle("showHistory");
         case "toggle-toc":
           return ui.toggle("showToc");
+        case "toggle-sidebar-mode":
+          return ui.set("sidebar", uiStore.state.settings.sidebar === "tree" ? "history" : "tree");
         case "toggle-theme":
           return ui.set("theme", isDark() ? "light" : "dark");
         case "zoom-in":
@@ -203,11 +215,12 @@ export function App() {
       if (!event.metaKey && !event.ctrlKey) return;
       const key = event.key.toLowerCase();
       const actions: Record<string, () => void> = {
-        o: () => void viewer.pick(),
+        o: () => (event.shiftKey ? void workspace.pick() : void viewer.pick()),
         r: () => void viewer.refresh(),
         f: () => viewer.openFind(true),
         "1": () => ui.toggle("showHistory"),
         "2": () => ui.toggle("showToc"),
+        "3": () => ui.set("sidebar", uiStore.state.settings.sidebar === "tree" ? "history" : "tree"),
         "0": () => zoom(0),
         "+": () => zoom(1),
         "-": () => zoom(-1),
@@ -236,7 +249,7 @@ export function App() {
           <button
             type="button"
             className="btn ghost icon"
-            title="Verlauf ein-/ausblenden (⌘1)"
+            title="Seitenleiste ein-/ausblenden (⌘1)"
             onClick={() => ui.toggle("showHistory")}
           >
             {settings.showHistory ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
@@ -306,14 +319,24 @@ export function App() {
             </>
           )}
           {canPick && (
-            <button
-              type="button"
-              className="btn"
-              title="Datei öffnen (⌘O)"
-              onClick={() => void viewer.pick()}
-            >
-              <FolderOpen size={15} /> <span className="hide-narrow">Öffnen</span>
-            </button>
+            <>
+              <button
+                type="button"
+                className="btn ghost icon"
+                title="Ordner öffnen (⌘⇧O)"
+                onClick={() => void workspace.pick()}
+              >
+                <FolderTree size={15} />
+              </button>
+              <button
+                type="button"
+                className="btn"
+                title="Datei öffnen (⌘O)"
+                onClick={() => void viewer.pick()}
+              >
+                <FolderOpen size={15} /> <span className="hide-narrow">Öffnen</span>
+              </button>
+            </>
           )}
           <button
             type="button"
@@ -335,7 +358,7 @@ export function App() {
       </header>
 
       <div className="body">
-        {settings.showHistory && <History canPick={canPick} />}
+        {settings.showHistory && <Sidebar canPick={canPick} />}
 
         <main className="doc-scroll">
           <FindBar />

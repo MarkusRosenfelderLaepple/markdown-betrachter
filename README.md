@@ -20,27 +20,33 @@ deno task start         # Bundle bauen und Fenster öffnen
 - **Mermaid-Diagramme** und **KaTeX-Formeln** (`$…$` im Text, `$$…$$` abgesetzt).
 - **Bilder, PDFs, Videos** relativ zum Dokument (`![](bilder/plan.png)`).
 - **Verlauf** in der linken Seitenleiste: durchsuchbar, anheftbar, mit „im Finder zeigen" und „entfernen".
+- **Ordnerbaum** in derselben Leiste (⌘3 schaltet um): Ein Projektordner wird auf seine Markdown-Dateien
+  eingedampft — Ordner ohne Dokument darunter verschwinden, `.gitignore` gilt, `.git` und `node_modules`
+  bleiben grundsätzlich draußen. Filtern über den ganzen Baum, Tastaturbedienung mit ↑↓→← und Enter. Der
+  Ordner wird überwacht: neue, gelöschte und umbenannte Dateien erscheinen von selbst.
 - **Inhaltsverzeichnis** rechts, das beim Scrollen mitläuft.
 - **Live-Aktualisierung:** Speichern im Editor aktualisiert die Vorschau, ohne die Leseposition zu verlieren.
 - **Verweise zwischen Dokumenten:** ein Klick auf `[Anhang](./anhang.md)` öffnet die Datei im Betrachter, ⌘←
   führt zurück. Externe Links gehen in den Standardbrowser.
 - Hell/Dunkel, Lesebreite, Schriftgröße, Suchen im Dokument, Drucken bzw. als PDF sichern.
 - **„Öffnen mit …":** `open -a Markdown-Betrachter.app --args datei.md` — läuft die App schon, zeigt das
-  vorhandene Fenster die Datei.
+  vorhandene Fenster die Datei. Ein **Ordner** als Argument wird zum Arbeitsordner des Baums.
 
 ## Tastenkürzel
 
-| Kürzel             | Wirkung                                          |
-| ------------------ | ------------------------------------------------ |
-| `⌘O`               | Datei öffnen                                     |
-| `⌘R`               | Neu laden                                        |
-| `⌘F`               | Im Dokument suchen                               |
-| `⌘1` / `⌘2`        | Verlauf / Inhaltsverzeichnis ein- und ausblenden |
-| `⌘←` / `⌘→`        | Zurück / vorwärts zwischen Dokumenten            |
-| `⌘+` / `⌘-` / `⌘0` | Schrift größer / kleiner / normal                |
-| `⌘⇧L`              | Hell / Dunkel                                    |
-| `⌘⌥R`              | Im Finder zeigen                                 |
-| `⌘P`               | Drucken oder als PDF sichern                     |
+| Kürzel             | Wirkung                                               |
+| ------------------ | ----------------------------------------------------- |
+| `⌘O`               | Datei öffnen                                          |
+| `⌘⇧O`              | Ordner öffnen (Ordnerbaum)                            |
+| `⌘R`               | Neu laden                                             |
+| `⌘F`               | Im Dokument suchen                                    |
+| `⌘1` / `⌘2`        | Seitenleiste / Inhaltsverzeichnis ein- und ausblenden |
+| `⌘3`               | Seitenleiste: Verlauf ↔ Ordner                        |
+| `⌘←` / `⌘→`        | Zurück / vorwärts zwischen Dokumenten                 |
+| `⌘+` / `⌘-` / `⌘0` | Schrift größer / kleiner / normal                     |
+| `⌘⇧L`              | Hell / Dunkel                                         |
+| `⌘⌥R`              | Im Finder zeigen                                      |
+| `⌘P`               | Drucken oder als PDF sichern                          |
 
 Alle Kürzel stehen auch im nativen Menü — dort ist die Liste die Wahrheit (`src/window.ts`), die Oberfläche
 spiegelt sie nur (`ui/src/menu.ts`).
@@ -53,7 +59,9 @@ Der Stack ist im Kochbuch beschrieben; hier steht nur, was für **diese** App en
 shared/schema.ts        Doc, HistoryEntry, Einstellungen — ein Schema, beide Seiten
 src/documents.ts        Datei lesen: Kodierung, Titel, Beigaben auflösen
 src/repo/documents.ts   Verlauf in SQLite (eine parse()-Stelle)
-src/watch.ts            Deno.watchFs auf den *Ordner* (siehe unten)
+src/watch.ts            Deno.watchFs auf den *Ordner* (siehe unten) — Datei und Arbeitsordner
+src/tree.ts             Projektordner → beschnittener Markdown-Baum
+src/gitignore.ts        kleiner .gitignore-Abgleich für ebendiesen Baum
 src/api.ts              Hono-Router + AppType für den typisierten Client
 ui/src/markdown.ts      marked → eigene Renderer → DOMPurify; Mermaid nachgeladen
 ui/src/components/Viewer.tsx   besitzt den Markdown-Teilbaum im DOM (siehe unten)

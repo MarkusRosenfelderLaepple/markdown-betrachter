@@ -119,10 +119,13 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
 
 const SHORTCUTS: [string, string][] = [
   ["⌘O", "Datei öffnen"],
+  ["⌘⇧O", "Ordner öffnen"],
   ["⌘R", "Dokument neu laden"],
   ["⌘F", "Im Dokument suchen"],
-  ["⌘1", "Verlauf ein-/ausblenden"],
+  ["⌘1", "Seitenleiste ein-/ausblenden"],
   ["⌘2", "Inhaltsverzeichnis ein-/ausblenden"],
+  ["⌘3", "Seitenleiste: Verlauf ↔ Ordner"],
+  ["↑ ↓ → ←", "Im Ordnerbaum bewegen, Enter öffnet"],
   ["⌘←  /  ⌘→", "Zurück / vorwärts im Dokumentverlauf"],
   ["⌘+  /  ⌘-  /  ⌘0", "Schrift größer / kleiner / normal"],
   ["⌘⇧L", "Hell / Dunkel"],

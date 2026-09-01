@@ -69,6 +69,15 @@ export async function exists(path: string): Promise<boolean> {
   }
 }
 
+/** Ordner oder Datei? Entscheidet, ob ein Startargument ein Arbeitsordner ist. */
+export async function isDirectory(path: string): Promise<boolean> {
+  try {
+    return (await Deno.stat(path)).isDirectory;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Pfadprüfung für jeden Pfad, der aus dem Client kommt: nach `resolve()` muss
  * er innerhalb des erlaubten Verzeichnisses liegen. Ohne das ist jeder
@@ -128,10 +137,48 @@ export function canPickFiles(): boolean {
 }
 
 /**
+ * Startverzeichnis prüfen, bevor es in einen Dialog geht.
+ *
+ * Der Grund ist ein echter Fehlschlag, kein Vorsichtsprinzip: AppleScript
+ * wandelt `POSIX file "…"` nur dann in einen `alias` um, wenn der Pfad
+ * **existiert**. Zeigt das gemerkte Verzeichnis auf etwas Gelöschtes — ein
+ * abgeräumter Projektordner, ein abgezogener USB-Stick —, bricht `osascript`
+ * mit `-1700` ab und der Anwender bekommt gar keinen Dialog zu sehen. Ein
+ * veraltetes Startverzeichnis darf höchstens Komfort kosten, nie das Öffnen.
+ */
+export async function usableStartDir(path?: string): Promise<string | undefined> {
+  if (!path) return undefined;
+  // Anführungszeichen im Pfad würden das AppleScript-Literal sprengen.
+  if (path.includes('"') || path.includes("\\")) return undefined;
+  return (await isDirectory(path)) ? path : undefined;
+}
+
+/**
+ * AppleScript-Dialog mit Startverzeichnis — und ohne, falls das schiefgeht.
+ *
+ * Das zweite Netz unter `usableStartDir()`: Der Ordner kann zwischen Prüfung
+ * und Aufruf verschwinden, und nicht jeder Pfad, den `stat` mag, lässt sich in
+ * einen `alias` wandeln (Netzlaufwerke, Ordner ohne Leserecht). Scheitert der
+ * Versuch, wird der Dialog **ohne** Startverzeichnis wiederholt statt dem
+ * Anwender einen Fehler statt eines Dialogs zu zeigen.
+ */
+async function osaDialog(build: (location: string) => string, startDir?: string): Promise<string | null> {
+  if (startDir) {
+    try {
+      return (await run("osascript", ["-e", build(` default location (POSIX file "${startDir}")`)])) || null;
+    } catch (error) {
+      log.warn(`Startverzeichnis für den Dialog unbrauchbar (${startDir}): ${error}`);
+    }
+  }
+  return (await run("osascript", ["-e", build("")])) || null;
+}
+
+/**
  * Öffnen-Dialog, auf Markdown eingeschränkt. Der Filter ist plattformabhängig
  * formuliert; wo er nicht durchsetzbar ist, prüft der Aufrufer die Endung.
  */
-export async function pickMarkdownFile(startDir?: string): Promise<string | null> {
+export async function pickMarkdownFile(wanted?: string): Promise<string | null> {
+  const startDir = await usableStartDir(wanted);
   const dialog = desktopDialog();
   if (dialog?.open) {
     const picked = await dialog.open({ multiple: false, defaultPath: startDir });
@@ -140,10 +187,12 @@ export async function pickMarkdownFile(startDir?: string): Promise<string | null
   if (Deno.build.os === "darwin") {
     // `of type` erwartet UTIs; "net.daringfireball.markdown" deckt .md/.markdown ab,
     // "public.plain-text" den Rest (.txt, .mdx bei manchen Systemen).
-    const location = startDir ? ` default location (POSIX file "${startDir}")` : "";
-    const script = `POSIX path of (choose file with prompt "Markdown-Datei öffnen"${location} ` +
-      `of type {"net.daringfireball.markdown", "public.plain-text"})`;
-    return (await run("osascript", ["-e", script])) || null;
+    return await osaDialog(
+      (location) =>
+        `POSIX path of (choose file with prompt "Markdown-Datei öffnen"${location} ` +
+        `of type {"net.daringfireball.markdown", "public.plain-text"})`,
+      startDir,
+    );
   }
   if (Deno.build.os === "windows") {
     const script = `Add-Type -AssemblyName System.Windows.Forms; ` +
@@ -165,17 +214,58 @@ export async function pickMarkdownFile(startDir?: string): Promise<string | null
   return null;
 }
 
-export async function pickSaveFile(suggested: string, startDir?: string): Promise<string | null> {
+/**
+ * Ordner-Dialog für den Arbeitsordner.
+ *
+ * Dieselbe Abstufung wie beim Datei-Dialog: erst `Deno.dialog` (dort schaltet
+ * `directory: true` um), sonst das Bordmittel des Betriebssystems.
+ */
+export async function pickFolder(wanted?: string): Promise<string | null> {
+  const startDir = await usableStartDir(wanted);
+  const dialog = desktopDialog();
+  if (dialog?.open) {
+    const picked = await dialog.open({ directory: true, multiple: false, defaultPath: startDir });
+    return Array.isArray(picked) ? picked[0] ?? null : picked ?? null;
+  }
+  if (Deno.build.os === "darwin") {
+    return await osaDialog(
+      (location) => `POSIX path of (choose folder with prompt "Ordner öffnen"${location})`,
+      startDir,
+    );
+  }
+  if (Deno.build.os === "windows") {
+    const script = `Add-Type -AssemblyName System.Windows.Forms; ` +
+      `$d = New-Object System.Windows.Forms.FolderBrowserDialog; ` +
+      `${startDir ? `$d.SelectedPath = '${startDir}'; ` : ""}` +
+      `if ($d.ShowDialog() -eq 'OK') { $d.SelectedPath }`;
+    return (await run("powershell", ["-NoProfile", "-Command", script])) || null;
+  }
+  for (const tool of ["zenity", "kdialog"]) {
+    try {
+      const args = tool === "zenity"
+        ? ["--file-selection", "--directory"]
+        : ["--getexistingdirectory", startDir ?? "."];
+      return (await run(tool, args)) || null;
+    } catch { /* nächstes Werkzeug */ }
+  }
+  log.warn("Kein nativer Ordner-Dialog verfügbar");
+  return null;
+}
+
+export async function pickSaveFile(suggested: string, wanted?: string): Promise<string | null> {
+  const startDir = await usableStartDir(wanted);
   const dialog = desktopDialog();
   if (dialog?.save) {
     return await dialog.save({ defaultPath: startDir ? join(startDir, suggested) : suggested }) ?? null;
   }
   if (Deno.build.os === "darwin") {
-    const location = startDir ? ` default location (POSIX file "${startDir}")` : "";
-    const script = `POSIX path of (choose file name with prompt "Speichern unter" default name "${
-      basename(suggested)
-    }"${location})`;
-    return (await run("osascript", ["-e", script])) || null;
+    return await osaDialog(
+      (location) =>
+        `POSIX path of (choose file name with prompt "Speichern unter" default name "${
+          basename(suggested)
+        }"${location})`,
+      startDir,
+    );
   }
   if (Deno.build.os === "windows") {
     const script = `Add-Type -AssemblyName System.Windows.Forms; ` +

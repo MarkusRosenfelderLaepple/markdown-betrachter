@@ -19,8 +19,9 @@ setupLog();
 // Vor allem anderen: Läuft schon eine Instanz, gehört ihr das Fenster — und
 // dieser Prozess hat nichts zu tun. Nur im Fensterbetrieb; im Browser-Loop
 // sind zwei Server auf verschiedenen Ports völlig in Ordnung.
-// Datei aus den Startargumenten („Öffnen mit …", `open -a … --args datei.md`)
-// — sie wird an die laufende Instanz weitergereicht oder beim Start geöffnet.
+// Datei **oder Ordner** aus den Startargumenten („Öffnen mit …",
+// `open -a … --args datei.md`) — wird an die laufende Instanz weitergereicht
+// oder beim Start geöffnet.
 const wanted = await startupPath(Deno.args);
 
 if (isDesktop && await focusRunningInstance(wanted)) Deno.exit(0);
@@ -32,7 +33,7 @@ let handle: ReturnType<typeof createWindow> = null;
 const { app } = createApp({
   transformHtml: injectToken,
   onFocusRequest: () => handle?.focus(),
-  startupPath: wanted,
+  startupTarget: wanted,
 });
 
 // `hostname` explizit: die Vorgabe von Deno.serve ist **nicht** Loopback —

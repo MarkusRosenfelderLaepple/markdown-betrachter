@@ -13,6 +13,14 @@ import { z } from "zod";
 /** Erlaubte Endungen beim Öffnen. Alles andere ist kein Markdown. */
 export const MARKDOWN_EXTENSIONS = [".md", ".markdown", ".mdown", ".mkd", ".mdx", ".txt"] as const;
 
+/**
+ * Endungen, die der **Ordnerbaum** zeigt — `.txt` fehlt hier mit Absicht.
+ * Beim Öffnen einer einzelnen Datei ist es richtig, sie anzubieten; in einem
+ * Projektordner wäre die Liste danach voll mit `requirements.txt` und
+ * `LICENSE.txt`, und um die geht es beim Durchblättern von Dokumentation nicht.
+ */
+export const TREE_EXTENSIONS = [".md", ".markdown", ".mdown", ".mkd", ".mdx"] as const;
+
 export const Encoding = z.enum(["utf-8", "windows-1252"]);
 export type Encoding = z.infer<typeof Encoding>;
 
@@ -68,6 +76,50 @@ export const HistoryQuery = z.object({
 });
 export type HistoryQuery = z.infer<typeof HistoryQuery>;
 
+// ── Ordnerbaum ──────────────────────────────────────────────────────────────
+
+/**
+ * Ein Knoten des Ordnerbaums.
+ *
+ * Der Typ ist rekursiv, das Schema deshalb ausdrücklich annotiert — Zod kann
+ * den Typ eines `z.lazy()` nicht selbst herleiten. Geprüft wird der Baum nur
+ * auf dem Weg *aus* der App heraus (Antworttyp); hereinkommende Daten sind
+ * immer nur ein Pfad.
+ */
+export interface TreeNode {
+  kind: "dir" | "file";
+  /** Anzeigename. Bei zusammengezogenen Ordnerketten mehrteilig: `docs/adr`. */
+  name: string;
+  /** Absoluter Pfad — damit wird geöffnet und im Finder gezeigt. */
+  path: string;
+  /** Pfad relativ zur Wurzel — der Filter sucht darin, und er ist der Schlüssel. */
+  rel: string;
+  children?: TreeNode[];
+}
+
+export const TreeNode: z.ZodType<TreeNode> = z.lazy(() =>
+  z.object({
+    kind: z.enum(["dir", "file"]),
+    name: z.string(),
+    path: z.string(),
+    rel: z.string(),
+    children: z.array(TreeNode).optional(),
+  })
+);
+
+export const TreeResult = z.object({
+  /** Absoluter Pfad der Wurzel. */
+  root: z.string(),
+  /** Name der Wurzel für die Kopfzeile der Seitenleiste. */
+  name: z.string(),
+  nodes: z.array(TreeNode),
+  /** Anzahl gefundener Dokumente. */
+  files: z.number().int().nonnegative(),
+  /** Obergrenze erreicht — die Seitenleiste sagt es dann, statt still zu kürzen. */
+  truncated: z.boolean(),
+});
+export type TreeResult = z.infer<typeof TreeResult>;
+
 // ── Einstellungen ───────────────────────────────────────────────────────────
 
 /**
@@ -85,7 +137,15 @@ export const SETTINGS = {
   /** Datei überwachen und bei Änderung neu laden. */
   autoReload: z.boolean().default(true),
   showToc: z.boolean().default(true),
+  /** Linke Seitenleiste sichtbar (⌘1) — sie zeigt Verlauf **oder** Ordnerbaum. */
   showHistory: z.boolean().default(true),
+  /** Welcher der beiden Bereiche in der linken Leiste steht. */
+  sidebar: z.enum(["history", "tree"]).default("history"),
+  /**
+   * Der geöffnete Ordner. Er überlebt den Neustart — ein Arbeitsordner ist
+   * nichts, was man jeden Morgen neu heraussucht. Leer heißt: keiner offen.
+   */
+  workspaceDir: z.string().default(""),
   windowBounds: z.object({
     width: z.number().int().positive(),
     height: z.number().int().positive(),

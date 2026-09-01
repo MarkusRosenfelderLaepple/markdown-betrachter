@@ -1,9 +1,10 @@
 /**
- * Verlauf: die Seitenleiste links.
+ * Verlauf: die erste der beiden Ansichten der linken Seitenleiste (die zweite
+ * ist der Ordnerbaum, siehe `Tree.tsx`; den Rahmen stellt `Sidebar.tsx`).
  *
- * Sie ist in einem Betrachter das Hauptnavigationsmittel — Dateien werden
- * einmal über den Dialog geöffnet und danach aus dieser Liste. Angeheftetes
- * steht oben und überlebt „Verlauf leeren".
+ * Er ist in einem Betrachter das Hauptnavigationsmittel für alles, was nicht
+ * in einem Arbeitsordner liegt — einmal über den Dialog geöffnet, danach aus
+ * dieser Liste. Angeheftetes steht oben und überlebt „Verlauf leeren".
  */
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -54,7 +55,7 @@ export function History({ canPick }: { canPick: boolean }) {
   const recent = entries.filter((entry) => !entry.pinned);
 
   return (
-    <aside className="side history">
+    <div className="side-body">
       <div className="side-head">
         <Clock size={15} />
         <strong>Verlauf</strong>
@@ -147,7 +148,7 @@ export function History({ canPick }: { canPick: boolean }) {
           onClose={() => setConfirmClear(false)}
         />
       )}
-    </aside>
+    </div>
   );
 }
 

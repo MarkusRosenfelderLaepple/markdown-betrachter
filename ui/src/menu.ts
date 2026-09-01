@@ -11,6 +11,7 @@
  */
 export type MenuAction =
   | "open"
+  | "open-folder"
   | "refresh"
   | "reveal"
   | "copy-path"
@@ -18,6 +19,7 @@ export type MenuAction =
   | "find"
   | "toggle-history"
   | "toggle-toc"
+  | "toggle-sidebar-mode"
   | "toggle-theme"
   | "zoom-in"
   | "zoom-out"

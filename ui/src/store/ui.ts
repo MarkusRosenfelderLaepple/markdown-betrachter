@@ -31,6 +31,8 @@ const DEFAULTS: Settings = {
   autoReload: true,
   showToc: true,
   showHistory: true,
+  sidebar: "history",
+  workspaceDir: "",
   windowBounds: null,
 };
 

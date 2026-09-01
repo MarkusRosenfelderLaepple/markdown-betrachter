@@ -20,10 +20,20 @@ import { HistoryQuery, OpenRequest, SettingKeyEnum, SETTINGS } from "../shared/s
 import { AppError, badRequest, notFound, toErrorBody } from "../shared/errors.ts";
 import * as history from "./repo/documents.ts";
 import { isMarkdownPath, readDocument, resolveAsset } from "./documents.ts";
-import { watchFile } from "./watch.ts";
+import { scanTree } from "./tree.ts";
+import type { StartupTarget } from "./startup.ts";
+import { watchFile, watchTree } from "./watch.ts";
 import { allSettings, readSetting, writeSetting, writeSettingChecked } from "./settings.ts";
 import { backupTo, databasePath } from "./db.ts";
-import { canPickFiles, exists, openExternal, pickMarkdownFile, pickSaveFile, revealPath } from "./files.ts";
+import {
+  canPickFiles,
+  exists,
+  openExternal,
+  pickFolder,
+  pickMarkdownFile,
+  pickSaveFile,
+  revealPath,
+} from "./files.ts";
 import { APP_NAME, dataDir, logPath } from "./paths.ts";
 import { flushLog, log } from "./log.ts";
 import { guard } from "./security.ts";
@@ -63,8 +73,8 @@ export interface ApiOptions {
   transformHtml?: (html: string) => string;
   /** Zweitstart holt das vorhandene Fenster nach vorn (siehe `src/instance.ts`). */
   onFocusRequest?: () => void;
-  /** Pfad aus `Deno.args` — „Öffnen mit …" bzw. `open -a … --args datei.md`. */
-  startupPath?: string | null;
+  /** Datei oder Ordner aus `Deno.args` — „Öffnen mit …" bzw. `open -a … --args datei.md`. */
+  startupTarget?: StartupTarget | null;
 }
 
 /**
@@ -83,7 +93,7 @@ const IdParam = z.object({ id: z.coerce.number().int().positive() });
 
 export function createApp(options: ApiOptions = {}) {
   const app = new Hono();
-  let startupPath = options.startupPath ?? null;
+  let startupTarget = options.startupTarget ?? null;
 
   if (options.requestLog !== false) app.use("*", honoLogger((message) => log.debug(message.trim())));
 
@@ -110,8 +120,10 @@ export function createApp(options: ApiOptions = {}) {
     }
     // Ein Zweitstart mit Datei („Öffnen mit …", während die App schon läuft)
     // reicht den Pfad hier herein; die Oberfläche holt ihn beim Fokussieren ab.
-    const body = await c.req.json().catch(() => ({})) as { path?: unknown };
-    if (typeof body.path === "string" && body.path) startupPath = body.path;
+    const body = await c.req.json().catch(() => ({})) as { path?: unknown; kind?: unknown };
+    if (typeof body.path === "string" && body.path) {
+      startupTarget = { path: body.path, kind: body.kind === "dir" ? "dir" : "file" };
+    }
     options.onFocusRequest?.();
     return c.json({ ok: true } as const);
   });
@@ -128,7 +140,7 @@ export function createApp(options: ApiOptions = {}) {
         logPath: logPath(),
         deno: Deno.version.deno,
         canPickFiles: canPickFiles(),
-        startupPath,
+        startupPath: startupTarget?.path ?? null,
       }))
     /**
      * Einmalig: Der Startpfad wird beim Abholen gelöscht. Sonst springt die
@@ -136,9 +148,9 @@ export function createApp(options: ApiOptions = {}) {
      * der die App gestartet wurde.
      */
     .post("/api/startup/claim", (c) => {
-      const path = startupPath;
-      startupPath = null;
-      return c.json({ path });
+      const target = startupTarget;
+      startupTarget = null;
+      return c.json({ path: target?.path ?? null, kind: target?.kind ?? null });
     })
     // ── Dokument öffnen ────────────────────────────────────────────────────
     /**
@@ -183,6 +195,67 @@ export function createApp(options: ApiOptions = {}) {
     /** „Verlauf leeren" lässt Angeheftetes stehen. */
     .delete("/api/documents", (c) => c.json({ removed: history.clearUnpinned() }))
     .post("/api/documents/prune", (c) => c.json({ removed: history.removeMissing() }))
+    // ── Ordnerbaum ─────────────────────────────────────────────────────────
+    /**
+     * Arbeitsordner wählen. Wie beim Datei-Dialog läuft er auf der Deno-Seite;
+     * `root: null` heißt „abgebrochen" und ist kein Fehler.
+     */
+    .post("/api/tree/pick", async (c) => {
+      const path = await pickFolder(readSetting("workspaceDir") || readSetting("lastDir") || undefined);
+      if (!path) return c.json({ tree: null });
+      const tree = await scanTree(path);
+      writeSetting("workspaceDir", tree.root);
+      return c.json({ tree });
+    })
+    /**
+     * Den Baum eines bekannten Ordners liefern — beim Start (gemerkter
+     * Arbeitsordner) und nach jeder Meldung des Beobachters.
+     *
+     * Der ganze Baum in einer Antwort, nicht Ebene für Ebene: Nach dem Beschnitt
+     * sind selbst große Projekte ein paar hundert Knoten, und nur so kann der
+     * Filter in der Seitenleiste den **gesamten** Baum durchsuchen statt nur das
+     * gerade Aufgeklappte.
+     */
+    .get("/api/tree", check("query", z.object({ root: z.string().min(1) })), async (c) => {
+      const tree = await scanTree(c.req.valid("query").root);
+      return c.json(tree);
+    })
+    /**
+     * Wie `/api/watch`, nur für den Arbeitsordner: Wird eine Datei angelegt,
+     * gelöscht oder umbenannt, meldet sich der Server und die Seitenleiste
+     * liest den Baum neu ein. Was hier durchkommt, filtert `src/watch.ts` —
+     * eine gespeicherte `.ts`-Datei ist keine Änderung am Baum.
+     */
+    .get("/api/tree/watch", check("query", z.object({ root: z.string().min(1) })), (c) => {
+      const root = c.req.valid("query").root;
+      return streamSSE(c, async (stream) => {
+        let pending = 0;
+        let wake: () => void = () => {};
+        let aborted = false;
+        const unsubscribe = watchTree(root, () => {
+          pending++;
+          wake();
+        });
+        stream.onAbort(() => {
+          aborted = true;
+          wake();
+        });
+        try {
+          await stream.writeSSE({ event: "ready", data: root });
+          while (!aborted) {
+            while (pending > 0) {
+              pending = 0;
+              await stream.writeSSE({ event: "change", data: new Date().toISOString() });
+            }
+            await new Promise<void>((resolve) => {
+              wake = resolve;
+            });
+          }
+        } finally {
+          unsubscribe();
+        }
+      });
+    })
     // ── Beigaben (Bilder, PDFs, Videos im Dokument) ────────────────────────
     /**
      * Bilder im Markdown stehen relativ zum Dokument (`![](bilder/plan.png)`).

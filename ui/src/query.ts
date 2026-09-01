@@ -7,7 +7,7 @@
  * `store/viewer.ts`.
  */
 import { QueryClient, queryOptions } from "@tanstack/react-query";
-import type { AppInfo, Doc, HistoryEntry, Settings } from "../../shared/schema.ts";
+import type { AppInfo, Doc, HistoryEntry, Settings, TreeResult } from "../../shared/schema.ts";
 import { client, errorMessage, unwrap } from "./api.ts";
 import { toast } from "./store/ui.ts";
 
@@ -36,6 +36,32 @@ export const historyQuery = (q: string) =>
     queryKey: ["documents", q] as const,
     queryFn: () => unwrap<HistoryEntry[]>(client.api.documents.$get({ query: { q, limit: "200" } })),
   });
+
+/**
+ * Der Ordnerbaum eines Arbeitsordners.
+ *
+ * `staleTime: Infinity` ist hier kein Sparfimmel, sondern richtig: Der Baum
+ * veraltet nicht durch Zeitablauf, sondern durch Änderungen auf der Platte —
+ * und die meldet der Beobachter (`/api/tree/watch`), der dann gezielt
+ * `invalidateTree()` aufruft. Ein Neueinlesen bei jedem Fensterfokus wäre in
+ * einem großen Projekt spürbar.
+ */
+export const treeQuery = (root: string) =>
+  queryOptions({
+    queryKey: ["tree", root] as const,
+    queryFn: () => unwrap<TreeResult>(client.api.tree.$get({ query: { root } })),
+    enabled: root.length > 0,
+    staleTime: Infinity,
+  });
+
+export function invalidateTree(): void {
+  void queryClient.invalidateQueries({ queryKey: ["tree"] });
+}
+
+/** Öffnet den Ordner-Dialog; `tree` ist `null`, wenn abgebrochen wurde. */
+export function pickFolder(): Promise<{ tree: TreeResult | null }> {
+  return unwrap<{ tree: TreeResult | null }>(client.api.tree.pick.$post());
+}
 
 export const settingsQuery = queryOptions({
   queryKey: ["settings"] as const,

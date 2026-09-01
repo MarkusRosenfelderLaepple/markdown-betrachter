@@ -22,6 +22,10 @@
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px -16px rgba(16, 24, 40, 0.18);
   --shadow-hover: 0 1px 2px rgba(16, 24, 40, 0.08), 0 12px 28px -14px rgba(16, 24, 40, 0.24);
   --sidebar: #ffffff;
+  --find: #ffe98a;
+  --find-text: #232b33;
+  --find-now: #f59e0b;
+  --find-now-text: #1a1206;
   color-scheme: light;
 }
 
@@ -47,6 +51,10 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px -18px rgba(0, 0, 0, 0.7);
   --shadow-hover: 0 1px 2px rgba(0, 0, 0, 0.5), 0 14px 32px -16px rgba(0, 0, 0, 0.8);
   --sidebar: #15181b;
+  --find: #7a5f0d;
+  --find-text: #fff4cf;
+  --find-now: #ffb020;
+  --find-now-text: #1a1206;
   color-scheme: dark;
 }
 
@@ -1220,6 +1228,147 @@ h2 {
   display: flex;
 }
 
+/* --------------------------------------------------------------- Ordnerbaum
+
+   Der Baum teilt sich die Leiste mit dem Verlauf: `.side-tabs` steht fest oben,
+   darunter füllt `.side-body` den Rest. Ohne diese Zweiteilung würde die Liste
+   die Umschaltung aus dem Fenster schieben, sobald sie lang wird.
+   ------------------------------------------------------------------------- */
+
+.side-tabs {
+  padding: 10px 10px 6px;
+}
+
+.side-tabs .seg {
+  width: 100%;
+}
+
+.side-tabs .seg button {
+  flex: 1;
+}
+
+.side-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.side-head.tree-root {
+  gap: 6px;
+  padding-right: 4px;
+}
+
+/* Der Ordnername ist ein Knopf: ein Klick öffnet einen anderen Ordner. */
+.tree-root-name {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.tree-root-name:hover {
+  color: var(--brand);
+}
+
+.tree-list:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
+/* Eine Zeile im Baum. Die Einrückung kommt aus `--depth` (in `Tree.tsx`
+   gesetzt) — zwölf Klassen für zwölf Ebenen wären zwölfmal dieselbe Regel. */
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 3px 6px 3px calc(4px + var(--depth, 0) * 12px);
+  background: none;
+  border: 1px solid transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tree-row:hover {
+  background: var(--panel-2);
+}
+
+/* Der Tastaturzeiger ist nicht dasselbe wie das offene Dokument: Man läuft mit
+   den Pfeiltasten durch den Baum, ohne dabei etwas zu öffnen. */
+.tree-row.cursor {
+  border-color: var(--border-strong);
+}
+
+.tree-row.active {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+}
+
+.tree-twist {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  flex: 0 0 13px;
+  color: var(--muted);
+}
+
+.tree-icon {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.tree-row.active .tree-icon {
+  color: var(--brand);
+}
+
+/* Der volle Pfad steht im `title` — hier wird deshalb schlicht am Ende
+   gekürzt, statt mit `direction: rtl` zu tricksen (das verschiebt führende
+   Satzzeichen ans andere Ende und macht aus `.github` ein `github.`). */
+.tree-name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 10px;
+}
+
+.warn-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--amber);
+}
+
+/* Leerzustand der Leiste: Der Knopf ist hier der Hauptinhalt, nicht ein
+   Nachklapp — ohne Ordner gibt es nichts anderes zu tun. */
+.side-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 12px;
+}
+
 /* Inhaltsverzeichnis */
 .toc-list {
   display: flex;
@@ -1632,6 +1781,25 @@ h2 {
 .findbar .input {
   flex: 1;
   height: 28px;
+}
+
+.find-count {
+  min-width: 62px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Die Treffermarkierung selbst. `::highlight()` färbt, ohne dass im DOM etwas
+   steht — deshalb überlebt sie, dass Mermaid und KaTeX am selben Teilbaum
+   weiterarbeiten (siehe `find.ts`). */
+::highlight(find-all) {
+  background-color: var(--find);
+  color: var(--find-text);
+}
+
+::highlight(find-current) {
+  background-color: var(--find-now);
+  color: var(--find-now-text);
 }
 
 /* ---------------------------------------------------------------- Kleinkram */
